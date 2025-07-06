@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Do it, Lady</title>
+  <title>Bouncing PNG with Sound</title>
   <style>
     body, html {
       margin: 0;
@@ -45,12 +45,13 @@
     let y = 100;
     let dx = 3;
     let dy = 3;
-    const size = 200;
+    const size = 100;
 
     // Sound queue setup
     let soundIndex = 0;
     const sounds = [];
     let totalSounds = 0;
+    let soundInterval = null;
 
     function tryLoadNextSound() {
       const filename = soundIndex === 0 ? 'bounce.mp3' : `bounce${soundIndex}.mp3`;
@@ -70,7 +71,7 @@
     }
 
     function playNextSound() {
-      if (Math.random() < 0.3 && totalSounds > 0) {
+      if (totalSounds > 0) {
         const currentSound = sounds[soundIndex % totalSounds];
         currentSound.currentTime = 0;
         currentSound.play();
@@ -86,18 +87,12 @@
       x += dx;
       y += dy;
 
-      let bounced = false;
-
       if (x <= 0 || x + size >= canvas.width) {
         dx = -dx;
-        bounced = true;
       }
       if (y <= 0 || y + size >= canvas.height) {
         dy = -dy;
-        bounced = true;
       }
-
-      if (bounced) playNextSound();
     }
 
     startBtn.addEventListener('click', () => {
@@ -105,7 +100,10 @@
       soundIndex = 0;
       tryLoadNextSound();
       img.src = 'head.png';
-      img.onload = animate;
+      img.onload = () => {
+        animate();
+        soundInterval = setInterval(playNextSound, 4000); // Play sound every 4 seconds
+      };
     });
   </script>
 </body>
