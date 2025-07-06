@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Do it, Lady</title>
+  <title>Bouncing PNG with Sound</title>
   <style>
     body, html {
       margin: 0;
@@ -16,20 +16,31 @@
       top: 0;
       left: 0;
     }
+    #startBtn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 12px 24px;
+      background: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      z-index: 10;
+    }
   </style>
 </head>
 <body>
+  <button id="startBtn">Start</button>
   <canvas id="canvas"></canvas>
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('startBtn');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // Load PNG image
     const img = new Image();
-    img.src = 'head.png';
-
     let x = 100;
     let y = 100;
     let dx = 3;
@@ -39,6 +50,8 @@
     // Sound queue setup
     let soundIndex = 0;
     const sounds = [];
+    let totalSounds = 0;
+    let soundInterval = null;
 
     function tryLoadNextSound() {
       const filename = soundIndex === 0 ? 'bounce.mp3' : `bounce${soundIndex}.mp3`;
@@ -49,20 +62,20 @@
         tryLoadNextSound();
       });
       audio.addEventListener('error', () => {
-        // If error on loading next file, reset index to 0 for cycling
         if (sounds.length > 0) {
           soundIndex = 0;
+          totalSounds = sounds.length;
         }
       });
       audio.load();
     }
 
     function playNextSound() {
-      if (Math.random() < 0.3 && sounds.length > 0) {
-        const currentSound = sounds[soundIndex % sounds.length];
+      if (totalSounds > 0) {
+        const currentSound = sounds[soundIndex % totalSounds];
         currentSound.currentTime = 0;
         currentSound.play();
-        soundIndex = (soundIndex + 1) % (sounds.length);
+        soundIndex = (soundIndex + 1) % totalSounds;
       }
     }
 
@@ -74,22 +87,24 @@
       x += dx;
       y += dy;
 
-      let bounced = false;
-
       if (x <= 0 || x + size >= canvas.width) {
         dx = -dx;
-        bounced = true;
       }
       if (y <= 0 || y + size >= canvas.height) {
         dy = -dy;
-        bounced = true;
       }
-
-      if (bounced) playNextSound();
     }
 
-    img.onload = animate;
-    tryLoadNextSound();
+    startBtn.addEventListener('click', () => {
+      startBtn.style.display = 'none';
+      soundIndex = 0;
+      tryLoadNextSound();
+      img.src = 'head.png';
+      img.onload = () => {
+        animate();
+        soundInterval = setInterval(playNextSound, 2000); // Play sound every 4 seconds
+      };
+    });
   </script>
 </body>
 </html>
