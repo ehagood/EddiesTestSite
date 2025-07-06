@@ -33,6 +33,7 @@
 <body>
   <button id="startBtn">Do it, Lady</button>
   <canvas id="canvas"></canvas>
+
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -41,13 +42,11 @@
     canvas.height = window.innerHeight;
 
     const img = new Image();
-    img.src = 'head.png'; // Ensure this PNG has actual transparency
-
     const sound = new Audio('bounce.mp3');
 
     let x = 100, y = 100;
     let dx = 3, dy = 3;
-    const size = 200;
+    const size = 100;
 
     function playRandomSound() {
       if (Math.random() < 0.3) {
@@ -65,7 +64,6 @@
       y += dy;
 
       let bounced = false;
-
       if (x <= 0 || x + size >= canvas.width) {
         dx = -dx;
         bounced = true;
@@ -80,8 +78,19 @@
 
     startBtn.addEventListener('click', () => {
       startBtn.style.display = 'none';
-      sound.play().catch(() => {}); // Prime Safari audio engine
-      img.onload = animate;
+
+      // Ensure Safari unlocks audio and loads image AFTER user interaction
+      sound.play().then(() => {
+        sound.pause(); // Just to prime it
+        sound.currentTime = 0;
+
+        img.src = 'head.png';
+        img.onload = animate;
+        img.onerror = () => alert("⚠️ Image failed to load. Check that 'head.png' is in the repo.");
+      }).catch(err => {
+        alert("⚠️ Audio failed to start. This may be blocked in Safari.");
+        console.error(err);
+      });
     });
   </script>
 </body>
