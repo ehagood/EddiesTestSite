@@ -3,23 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bouncing Head</title>
+  <title>Bouncing PNG with Sound</title>
   <style>
     body, html {
       margin: 0;
       padding: 0;
       overflow: hidden;
       background: #000;
-      color: #fff;
-      text-align: center;
-      font-family: sans-serif;
-    }
-    #fileInput {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2;
     }
     canvas {
       position: absolute;
@@ -29,86 +19,56 @@
   </style>
 </head>
 <body>
-  <input type="file" id="fileInput" accept="image/*">
   <canvas id="canvas"></canvas>
-  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script>
-    const fileInput = document.getElementById('fileInput');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    let headImage = null;
-    let x = 100, y = 100, dx = 4, dy = 4, headR = 50;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    async function loadModels() {
-      await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights');
-      await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights');
+    // Load PNG image
+    const img = new Image();
+    img.src = 'head.png'; // Make sure this file is in the same repo directory
+
+    // Load audio clip
+    const sound = new Audio('bounce.mp3'); // Also should be in the same repo
+
+    let x = 100;
+    let y = 100;
+    let dx = 3;
+    let dy = 3;
+    const size = 100; // Width and height of the PNG
+
+    function playRandomSound() {
+      if (Math.random() < 0.3) { // 30% chance to play
+        sound.currentTime = 0;
+        sound.play();
+      }
     }
 
     function animate() {
+      requestAnimationFrame(animate);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (headImage) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x + headR, y + headR, headR, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(headImage, x, y, headR * 2, headR * 2);
-        ctx.restore();
-      }
+      ctx.drawImage(img, x, y, size, size);
+
       x += dx;
       y += dy;
-      if (x <= 0 || x + headR * 2 >= canvas.width) dx = -dx;
-      if (y <= 0 || y + headR * 2 >= canvas.height) dy = -dy;
-      requestAnimationFrame(animate);
+
+      let bounced = false;
+
+      if (x <= 0 || x + size >= canvas.width) {
+        dx = -dx;
+        bounced = true;
+      }
+      if (y <= 0 || y + size >= canvas.height) {
+        dy = -dy;
+        bounced = true;
+      }
+
+      if (bounced) playRandomSound();
     }
 
-    fileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      await img.decode();
-
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = canvas.width;
-      tempCanvas.height = canvas.height;
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      const detection = await faceapi.detectSingleFace(tempCanvas, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
-
-      if (detection) {
-        const { box } = detection.detection;
-        const scaleX = img.width / canvas.width;
-        const scaleY = img.height / canvas.height;
-
-        const cropX = box.x * scaleX;
-        const cropY = box.y * scaleY;
-        const cropW = box.width * scaleX;
-        const cropH = box.height * scaleY;
-
-        const faceCanvas = document.createElement('canvas');
-        const size = Math.max(cropW, cropH);
-        faceCanvas.width = size;
-        faceCanvas.height = size;
-        const faceCtx = faceCanvas.getContext('2d');
-        faceCtx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, size, size);
-
-        headImage = new Image();
-        headImage.src = faceCanvas.toDataURL();
-        await headImage.decode();
-
-        headR = Math.min(canvas.width, canvas.height) * 0.1;
-        x = Math.random() * (canvas.width - headR * 2);
-        y = Math.random() * (canvas.height - headR * 2);
-      } else {
-        alert("Face not detected. Try another photo.");
-      }
-    });
-
-    loadModels().then(() => animate());
+    img.onload = animate;
   </script>
 </body>
 </html>
