@@ -16,42 +16,53 @@
       top: 0;
       left: 0;
     }
-    #startBtn {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 12px 24px;
-      background: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 18px;
-      z-index: 10;
-    }
   </style>
 </head>
 <body>
-  <button id="startBtn">Start</button>
   <canvas id="canvas"></canvas>
-
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const startBtn = document.getElementById('startBtn');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    // Load PNG image
     const img = new Image();
-    const sound = new Audio('bounce.mp3');
+    img.src = 'head.png';
 
-    let x = 100, y = 100;
-    let dx = 3, dy = 3;
+    let x = 100;
+    let y = 100;
+    let dx = 3;
+    let dy = 3;
     const size = 200;
 
-    function playRandomSound() {
-      if (Math.random() < 0.3) {
-        sound.currentTime = 0;
-        sound.play();
+    // Sound queue setup
+    let soundIndex = 0;
+    const sounds = [];
+
+    function tryLoadNextSound() {
+      const filename = soundIndex === 0 ? 'bounce.mp3' : `bounce${soundIndex}.mp3`;
+      const audio = new Audio(filename);
+      audio.addEventListener('canplaythrough', () => {
+        sounds.push(audio);
+        soundIndex++;
+        tryLoadNextSound();
+      });
+      audio.addEventListener('error', () => {
+        // If error on loading next file, reset index to 0 for cycling
+        if (sounds.length > 0) {
+          soundIndex = 0;
+        }
+      });
+      audio.load();
+    }
+
+    function playNextSound() {
+      if (Math.random() < 0.3 && sounds.length > 0) {
+        const currentSound = sounds[soundIndex % sounds.length];
+        currentSound.currentTime = 0;
+        currentSound.play();
+        soundIndex = (soundIndex + 1) % (sounds.length);
       }
     }
 
@@ -64,6 +75,7 @@
       y += dy;
 
       let bounced = false;
+
       if (x <= 0 || x + size >= canvas.width) {
         dx = -dx;
         bounced = true;
@@ -73,25 +85,11 @@
         bounced = true;
       }
 
-      if (bounced) playRandomSound();
+      if (bounced) playNextSound();
     }
 
-    startBtn.addEventListener('click', () => {
-      startBtn.style.display = 'none';
-
-      // Ensure Safari unlocks audio and loads image AFTER user interaction
-      sound.play().then(() => {
-        sound.pause(); // Just to prime it
-        sound.currentTime = 0;
-
-        img.src = 'head.png';
-        img.onload = animate;
-        img.onerror = () => alert("⚠️ Image failed to load. Check that 'head.png' is in the repo.");
-      }).catch(err => {
-        alert("⚠️ Audio failed to start. This may be blocked in Safari.");
-        console.error(err);
-      });
-    });
+    img.onload = animate;
+    tryLoadNextSound();
   </script>
 </body>
 </html>
