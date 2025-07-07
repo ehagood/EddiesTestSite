@@ -1,0 +1,28 @@
+name: Generate Photo List
+
+on:
+  push:
+    paths:
+      - 'photos/**'
+      - '.github/workflows/generate-photo-list.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Generate photos.json
+        run: |
+          find photos -type f -name '*.jpg' > photolist.txt
+          jq -R -s -c 'split("\n") | map(select(length > 0))' photolist.txt > photos.json
+          rm photolist.txt
+
+      - name: Commit changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add photos.json
+          git diff --cached --quiet || git commit -m "Update photos.json"
+          git push
