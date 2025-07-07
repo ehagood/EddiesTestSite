@@ -27,11 +27,6 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // List of photo files (manual list due to GitHub Pages limitations)
-    const photoFiles = [
-      'photos/IMG_5686.JPEG'
-    ];
-
     function convertToDecimal(coord, ref) {
       let decimal = coord[0] + coord[1] / 60 + coord[2] / 3600;
       if (ref === 'S' || ref === 'W') {
@@ -40,29 +35,36 @@
       return decimal;
     }
 
-    photoFiles.forEach((file) => {
-      const img = new Image();
-      img.src = file;
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        EXIF.getData(img, function () {
-          const lat = EXIF.getTag(this, 'GPSLatitude');
-          const lng = EXIF.getTag(this, 'GPSLongitude');
-          const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
-          const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
+    fetch('photos.json')
+      .then(response => response.json())
+      .then(photoFiles => {
+        photoFiles.forEach((file) => {
+          const img = new Image();
+          img.src = file;
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            EXIF.getData(img, function () {
+              const lat = EXIF.getTag(this, 'GPSLatitude');
+              const lng = EXIF.getTag(this, 'GPSLongitude');
+              const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+              const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
 
-          if (lat && lng && latRef && lngRef) {
-            const latitude = convertToDecimal(lat, latRef);
-            const longitude = convertToDecimal(lng, lngRef);
+              if (lat && lng && latRef && lngRef) {
+                const latitude = convertToDecimal(lat, latRef);
+                const longitude = convertToDecimal(lng, lngRef);
 
-            const marker = L.marker([latitude, longitude]).addTo(map);
-            marker.bindPopup(`<img src="${file}" class="popup-image">`);
-          } else {
-            console.log(`No GPS data found for ${file}`);
-          }
+                const marker = L.marker([latitude, longitude]).addTo(map);
+                marker.bindPopup(`<img src="${file}" class="popup-image">`);
+              } else {
+                console.log(`No GPS data found for ${file}`);
+              }
+            });
+          };
         });
-      };
-    });
+      })
+      .catch(error => {
+        console.error('Error loading photo list:', error);
+      });
   </script>
 </body>
 </html>
