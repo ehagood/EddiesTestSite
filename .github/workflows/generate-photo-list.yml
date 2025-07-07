@@ -1,4 +1,4 @@
-name: Generate Photo List
+name: Generate Photo List 
 
 on:
   push:
