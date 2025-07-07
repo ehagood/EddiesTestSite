@@ -19,7 +19,7 @@ jobs:
       - name: Generate photos.json
         run: |
           find photos -type f \( -iname '*.jpg' -o -iname '*.jpeg' \) > photolist.txt
-          jq -R -s -c 'split(\"\\n\") | map(select(length > 0))' photolist.txt > photos.json
+          jq -R -s -c 'split("\n") | map(select(length > 0))' photolist.txt > photos.json
           rm photolist.txt
 
       - name: Commit changes
@@ -27,5 +27,5 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add photos.json
-          git diff --cached --quiet || git commit -m \"Update photos.json\"
+          git diff --cached --quiet || git commit -m "Update photos.json"
           git push
