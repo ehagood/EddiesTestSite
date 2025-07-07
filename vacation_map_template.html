@@ -4,12 +4,7 @@
   <meta charset="UTF-8">
   <title>Vacation Photo Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-sA+zNPrEMvnvFzNUvJmzp5Y2H2Z9e6p4NTH2yt+ZlEc="
-    crossorigin=""
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     html, body, #map {
       height: 100%;
@@ -22,38 +17,54 @@
 </head>
 <body>
   <div id="map"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1jFwj42G6k0axfC30ZVDCxNU0VUvVu2cPlzDg8xM=" crossorigin=""></script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
   <script>
-    const photos = [
-      {
-        file: 'photos/paris.jpg',
-        title: 'Eiffel Tower',
-        lat: 48.8584,
-        lng: 2.2945
-      },
-      {
-        file: 'photos/nyc.jpg',
-        title: 'New York City',
-        lat: 40.7128,
-        lng: -74.0060
-      }
-      // Add more manually or from a generated JSON
-    ];
-
     const map = L.map('map').setView([20, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    photos.forEach(photo => {
-      const marker = L.marker([photo.lat, photo.lng]).addTo(map);
-      marker.bindPopup(`
-        <strong>${photo.title}</strong><br>
-        <img src="${photo.file}" class="popup-image">
-      `);
-    });
+    function convertToDecimal(coord, ref) {
+      let decimal = coord[0] + coord[1] / 60 + coord[2] / 3600;
+      if (ref === 'S' || ref === 'W') {
+        decimal = -decimal;
+      }
+      return decimal;
+    }
+
+    fetch('photos.json')
+      .then(response => response.json())
+      .then(photoFiles => {
+        photoFiles.forEach((file) => {
+          const img = new Image();
+          img.src = file;
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            EXIF.getData(img, function () {
+              const lat = EXIF.getTag(this, 'GPSLatitude');
+              const lng = EXIF.getTag(this, 'GPSLongitude');
+              const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+              const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
+
+              if (lat && lng && latRef && lngRef) {
+                const latitude = convertToDecimal(lat, latRef);
+                const longitude = convertToDecimal(lng, lngRef);
+
+                const marker = L.marker([latitude, longitude]).addTo(map);
+                marker.bindPopup(`<img src="${file}" class="popup-image">`);
+              } else {
+                console.log(`No GPS data found for ${file}`);
+              }
+            });
+          };
+        });
+      })
+      .catch(error => {
+        console.error('Error loading photo list:', error);
+      });
   </script>
 </body>
 </html>
