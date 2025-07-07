@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vacation Photo Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+zNPrEMvnvFzNUvJmzp5Y2H2Z9e6p4NTH2yt+ZlEc="
+    crossorigin=""
+  />
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+    }
+    .popup-image {
+      width: 150px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1jFwj42G6k0axfC30ZVDCxNU0VUvVu2cPlzDg8xM=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+  <script>
+    const photos = [
+      {
+        file: 'photos/paris.jpg',
+        title: 'Eiffel Tower',
+        lat: 48.8584,
+        lng: 2.2945
+      },
+      {
+        file: 'photos/nyc.jpg',
+        title: 'New York City',
+        lat: 40.7128,
+        lng: -74.0060
+      }
+      // Add more manually or from a generated JSON
+    ];
+
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    photos.forEach(photo => {
+      const marker = L.marker([photo.lat, photo.lng]).addTo(map);
+      marker.bindPopup(`
+        <strong>${photo.title}</strong><br>
+        <img src="${photo.file}" class="popup-image">
+      `);
+    });
+  </script>
+</body>
+</html>
