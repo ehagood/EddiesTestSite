@@ -2,125 +2,490 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vacation Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
   />
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; }
-    #map { height: calc(100% - 250px); transition: height 0.5s ease; }
-    #controls { padding: 5px; background: #f0f0f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-    #galleryContainer { height: 250px; overflow-x: auto; background: #f9f9f9; padding: 5px; display: flex; flex-wrap: nowrap; }
-    .gallery-photo { height: 100%; margin-right: 10px; border-radius: 8px; }
-    .popup-image { max-width: 200px; max-height: 150px; display: block; margin-bottom: 4px; }
-    .popup-caption { font-size: 14px; }
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+    }
+    #map {
+      flex-grow: 1;
+      transition: height 0.5s ease;
+    }
+    #galleryContainer {
+      max-height: 250px;
+      overflow-y: auto;
+      border-top: 1px solid #ccc;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 5px;
+      background: #fafafa;
+      transition: max-height 0.5s ease, padding 0.5s ease;
+    }
+    #galleryContainer.hidden {
+      max-height: 0;
+      padding: 0 5px;
+      overflow: hidden;
+    }
+    #galleryContainer img {
+      height: 100px;
+      cursor: pointer;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 1000;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      font-size: 14px;
+      user-select: none;
+    }
+    #timeline {
+      text-align: center;
+      padding: 5px 0;
+      font-weight: bold;
+      background: #eee;
+      font-size: 16px;
+    }
+    button, input[type="checkbox"] {
+      margin: 3px;
+    }
+    /* Flip the icon horizontally */
+    .flipped-icon {
+      transform: scaleX(-1);
+    }
   </style>
 </head>
 <body>
-  <div id="controls">
-    <label for="timelineSlider">Timeline:</label>
-    <input type="range" id="timelineSlider" min="0" max="100" value="100" step="1" />
-    <span id="timelineYearLabel"></span>
-    <button id="timelinePlay">▶</button>
-    <button id="timelinePause" disabled>⏸</button>
-  </div>
   <div id="map"></div>
+
+  <div id="controls">
+    <label>
+      <input type="checkbox" id="toggleCluster" checked /> Use Clustering
+    </label>
+    <br />
+    <label for="yearFilter">Filter Year:</label>
+    <select id="yearFilter">
+      <option value="">All Years</option>
+    </select>
+    <br />
+    <label>
+      <input type="checkbox" id="showPhotosOnTrip" checked />
+      Show Photos During Trip
+    </label>
+    <br />
+    <button id="playTripBtn">Play Trip</button>
+    <button id="pauseTripBtn" disabled>Pause Trip</button>
+    <button id="resetTripBtn">Reset Trip</button>
+    <br />
+    <label for="speedRange">Speed (ms):</label>
+    <input type="range" id="speedRange" min="500" max="5000" step="100" value="1500" />
+    <br />
+    <button id="toggleGalleryBtn">Hide Gallery</button>
+  </div>
+
+  <div id="timeline"></div>
+
   <div id="galleryContainer"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+
   <script>
-    let map = L.map('map').setView([20, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    let map = L.map("map").setView([20, 0], 2);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
-    let tripPath = [];
-    let timelineTimer = null;
-    let tripCarMarker = null;
-    let tripCarIcon = L.icon({
+    let clusterGroup = L.markerClusterGroup();
+    let plainGroup = L.layerGroup();
+    let useClustering = true;
+
+    let gallery = document.getElementById("galleryContainer");
+    let yearSet = new Set();
+
+    // Flipped car icon
+    const carIcon = L.icon({
       iconUrl: "https://cdn-icons-png.flaticon.com/512/744/744465.png",
-      iconSize: [40, 40],
-      iconAnchor: [20, 20]
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      className: "flipped-icon"
     });
 
-    function loadMarkers(photos) {
-      map.eachLayer(layer => {
-        if (layer instanceof L.Marker && layer !== tripCarMarker) map.removeLayer(layer);
-      });
-      document.getElementById("galleryContainer").innerHTML = '';
-      photos.forEach(photo => {
-        if (photo.lat !== undefined && photo.lng !== undefined) {
-          const marker = L.marker([photo.lat, photo.lng]).addTo(map);
-          marker.bindPopup(`
-            <img src="${photo.path}" class="popup-image">
-            <div class="popup-caption">${photo.caption || ''}</div>
-            <button onclick="window.open('https://www.google.com/maps?q=&layer=c&cbll=${photo.lat},${photo.lng}', '_blank')">Street View</button>
-          `);
-        }
-        const img = document.createElement('img');
-        img.src = photo.path;
-        img.className = 'gallery-photo';
-        document.getElementById("galleryContainer").appendChild(img);
-      });
+    // Trip animation variables
+    let tripPath = [];
+    let tripIndex = 0;
+    let tripMarker = null;
+    let tripTimer = null;
+    let tripSpeed = 1500;
+    let showPhotosOnTrip = true;
+
+    // Polyline drawn only during play
+    let tripLine = null;
+
+    // Gallery state
+    let galleryVisible = true;
+
+    // Utility: parse EXIF date string to Date or null
+    function parseExifDate(dateStr) {
+      if (!dateStr) return null;
+      // EXIF date format: "YYYY:MM:DD HH:MM:SS"
+      const parts = dateStr.split(" ");
+      if (parts.length !== 2) return null;
+      const dateParts = parts[0].split(":");
+      const timeParts = parts[1].split(":");
+      if (
+        dateParts.length !== 3 ||
+        timeParts.length !== 3
+      ) return null;
+      return new Date(
+        +dateParts[0],
+        +dateParts[1] - 1,
+        +dateParts[2],
+        +timeParts[0],
+        +timeParts[1],
+        +timeParts[2]
+      );
     }
 
-    function updateTimelineSlider(percent) {
-      const cutoff = Math.floor(tripPath.length * percent / 100);
-      const filtered = tripPath.slice(0, cutoff);
-      const currentYear = cutoff > 0 ? tripPath[cutoff - 1].date.getFullYear() : '';
-      document.getElementById("timelineYearLabel").textContent = currentYear;
-      loadMarkers(filtered);
-      if (cutoff > 0 && tripPath[cutoff - 1].lat !== undefined && tripPath[cutoff - 1].lng !== undefined) {
-        const coord = [tripPath[cutoff - 1].lat, tripPath[cutoff - 1].lng];
-        if (!tripCarMarker) {
-          tripCarMarker = L.marker(coord, { icon: tripCarIcon }).addTo(map);
-        } else {
-          tripCarMarker.setLatLng(coord);
-        }
+    // Format EXIF year (for filter dropdown)
+    function formatExifYear(dateStr) {
+      const d = parseExifDate(dateStr);
+      return d ? d.getFullYear().toString() : null;
+    }
+
+    function convertToDecimal(coord, ref) {
+      if (!coord || !ref) return null;
+      let dec = coord[0] + coord[1] / 60 + coord[2] / 3600;
+      if (ref === "S" || ref === "W") dec = -dec;
+      return dec;
+    }
+
+    function clearMarkers() {
+      clusterGroup.clearLayers();
+      plainGroup.clearLayers();
+      if (tripMarker) {
+        map.removeLayer(tripMarker);
+        tripMarker = null;
+      }
+      tripPath = [];
+      tripIndex = 0;
+      document.getElementById("timeline").textContent = "";
+      if (tripLine) {
+        map.removeLayer(tripLine);
+        tripLine = null;
       }
     }
 
-    document.getElementById("timelineSlider").addEventListener("input", (e) => {
-      updateTimelineSlider(+e.target.value);
-    });
+    function loadMarkers(photoFiles, filterYear = null) {
+      return new Promise((resolve) => {
+        clearMarkers();
+        gallery.innerHTML = "";
+        yearSet.clear();
+        const bounds = [];
 
-    document.getElementById("timelinePlay").addEventListener("click", () => {
-      const slider = document.getElementById("timelineSlider");
-      document.getElementById("timelinePlay").disabled = true;
-      document.getElementById("timelinePause").disabled = false;
-      timelineTimer = setInterval(() => {
-        let val = +slider.value;
-        if (val >= 100) {
-          clearInterval(timelineTimer);
-          timelineTimer = null;
-          document.getElementById("timelinePlay").disabled = false;
-          document.getElementById("timelinePause").disabled = true;
-          return;
-        }
-        slider.value = val + 1;
-        updateTimelineSlider(val + 1);
-      }, 1000);
-    });
+        let loadPromises = photoFiles.map((entry) => {
+          return new Promise((res) => {
+            const file = typeof entry === "string" ? entry : entry.path;
+            const caption = typeof entry === "string" ? "" : entry.caption || "";
 
-    document.getElementById("timelinePause").addEventListener("click", () => {
-      clearInterval(timelineTimer);
-      timelineTimer = null;
-      document.getElementById("timelinePlay").disabled = false;
-      document.getElementById("timelinePause").disabled = true;
-    });
+            const img = new Image();
+            img.src = file;
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+              EXIF.getData(img, function () {
+                const lat = EXIF.getTag(this, "GPSLatitude");
+                const lng = EXIF.getTag(this, "GPSLongitude");
+                const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+                const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+                const dateStr = EXIF.getTag(this, "DateTimeOriginal");
+                const photoYear = formatExifYear(dateStr);
 
-    // Load JSON and build tripPath
+                if (photoYear) yearSet.add(photoYear);
+                if (filterYear && photoYear !== filterYear) {
+                  res();
+                  return;
+                }
+
+                if (lat && lng && latRef && lngRef) {
+                  const latitude = convertToDecimal(lat, latRef);
+                  const longitude = convertToDecimal(lng, lngRef);
+
+                  if (
+                    latitude === null ||
+                    longitude === null ||
+                    latitude < -90 ||
+                    latitude > 90 ||
+                    longitude < -180 ||
+                    longitude > 180
+                  ) {
+                    console.warn(
+                      `Out-of-range or invalid GPS for ${file}: (${latitude}, ${longitude})`
+                    );
+                    res();
+                    return;
+                  }
+
+                  bounds.push([latitude, longitude]);
+
+                  const marker = L.marker([latitude, longitude]);
+                  const popupHtml = `
+                    <img src="${file}" class="popup-image" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;">
+                    <div class="popup-caption">${caption}</div>
+                  `;
+                  marker.bindPopup(popupHtml);
+                  if (useClustering) {
+                    clusterGroup.addLayer(marker);
+                  } else {
+                    plainGroup.addLayer(marker);
+                  }
+
+                  // Prepare tripPath with parsed date
+                  const parsedDate = parseExifDate(dateStr);
+                  if (parsedDate) {
+                    tripPath.push({
+                      latLng: L.latLng(latitude, longitude),
+                      date: parsedDate,
+                      file: file,
+                      caption: caption,
+                      dateStr: dateStr,
+                    });
+                  }
+
+                  const gridImg = document.createElement("img");
+                  gridImg.src = file;
+                  gridImg.alt = caption;
+                  gallery.appendChild(gridImg);
+                } else {
+                  console.log(`No GPS data found for ${file}`);
+                }
+                res();
+              });
+            };
+
+            img.onerror = () => {
+              console.warn(`Failed to load image ${file}`);
+              res();
+            };
+          });
+        });
+
+        Promise.all(loadPromises).then(() => {
+          // Sort tripPath by parsed Date ascending
+          tripPath.sort((a, b) => a.date - b.date);
+          console.log("Trip path dates in order:", tripPath.map(p => p.date.toISOString()));
+
+          if (bounds.length) {
+            map.fitBounds(bounds);
+          }
+
+          // Update year filter dropdown
+          const yearSelect = document.getElementById("yearFilter");
+          const sortedYears = Array.from(yearSet).sort();
+          yearSelect.innerHTML = '<option value="">All Years</option>';
+          sortedYears.forEach((y) => {
+            const option = document.createElement("option");
+            option.value = y;
+            option.textContent = y;
+            yearSelect.appendChild(option);
+          });
+
+          // Add marker layers
+          if (useClustering) {
+            map.addLayer(clusterGroup);
+            map.removeLayer(plainGroup);
+          } else {
+            map.addLayer(plainGroup);
+            map.removeLayer(clusterGroup);
+          }
+
+          resolve();
+        });
+      });
+    }
+
+    function drawTripLine() {
+      if (tripLine) {
+        map.removeLayer(tripLine);
+        tripLine = null;
+      }
+      if (tripPath.length > 1) {
+        tripLine = L.polyline(tripPath.map((p) => p.latLng), {
+          color: "blue",
+          weight: 3,
+          opacity: 0.7,
+          smoothFactor: 1,
+        }).addTo(map);
+      }
+    }
+
+    function updateTimeline(dateStr) {
+      const timeline = document.getElementById("timeline");
+      timeline.textContent = dateStr ? `Date: ${dateStr}` : "";
+    }
+
+    function playTrip() {
+      if (tripIndex === 0) {
+        drawTripLine(); // Draw polyline only when starting trip
+      }
+
+      if (tripIndex >= tripPath.length) {
+        resetTrip();
+        return;
+      }
+
+      const step = tripPath[tripIndex];
+      if (!tripMarker) {
+        tripMarker = L.marker(step.latLng, { icon: carIcon }).addTo(map);
+      } else {
+        tripMarker.setLatLng(step.latLng);
+      }
+
+      map.panTo(step.latLng);
+
+      if (showPhotosOnTrip) {
+        tripMarker.bindPopup(`
+          <img src="${step.file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;">
+          <div>${step.caption}</div>
+          <div>${step.date.toISOString().slice(0,19).replace('T',' ')}</div>
+        `);
+        tripMarker.openPopup();
+      } else {
+        tripMarker.closePopup();
+      }
+
+      updateTimeline(step.date.toISOString().slice(0,10));
+
+      tripIndex++;
+      tripTimer = setTimeout(playTrip, tripSpeed);
+    }
+
+    function pauseTrip() {
+      if (tripTimer) {
+        clearTimeout(tripTimer);
+        tripTimer = null;
+      }
+      document.getElementById("playTripBtn").disabled = false;
+      document.getElementById("pauseTripBtn").disabled = true;
+    }
+
+    function resetTrip() {
+      pauseTrip();
+      tripIndex = 0;
+      if (tripMarker) {
+        map.removeLayer(tripMarker);
+        tripMarker = null;
+      }
+      if (tripLine) {
+        map.removeLayer(tripLine);
+        tripLine = null;
+      }
+      updateTimeline("");
+      document.getElementById("playTripBtn").disabled = false;
+      document.getElementById("pauseTripBtn").disabled = true;
+    }
+
+    function toggleGallery() {
+      galleryVisible = !galleryVisible;
+      const galleryEl = document.getElementById("galleryContainer");
+      const toggleBtn = document.getElementById("toggleGalleryBtn");
+      if (galleryVisible) {
+        galleryEl.classList.remove("hidden");
+        toggleBtn.textContent = "Hide Gallery";
+        document.getElementById("map").style.height = "calc(100% - 250px)";
+      } else {
+        galleryEl.classList.add("hidden");
+        toggleBtn.textContent = "Show Gallery";
+        document.getElementById("map").style.height = "100%";
+      }
+      map.invalidateSize();
+    }
+
+    // Initial gallery visible and map height
+    document.getElementById("map").style.height = "calc(100% - 250px)";
+
+    // Fetch photo list JSON and load markers
+    let photos = [];
     fetch("photos.json")
-      .then(res => res.json())
-      .then(data => {
-        tripPath = data.map(p => ({
-          ...p,
-          date: new Date(p.date || "1970-01-01")
-        })).sort((a, b) => a.date - b.date);
-        updateTimelineSlider(100);
+      .then((response) => {
+        if (!response.ok) throw new Error("Photo list JSON not found");
+        return response.json();
+      })
+      .then((data) => {
+        photos = data;
+        return loadMarkers(photos);
+      })
+      .then(() => {
+        // Setup event listeners after photos loaded
+        document.getElementById("toggleCluster").addEventListener("change", (e) => {
+          useClustering = e.target.checked;
+          loadMarkers(photos, document.getElementById("yearFilter").value);
+        });
+
+        document.getElementById("yearFilter").addEventListener("change", (e) => {
+          loadMarkers(photos, e.target.value);
+        });
+
+        document.getElementById("playTripBtn").addEventListener("click", () => {
+          document.getElementById("playTripBtn").disabled = true;
+          document.getElementById("pauseTripBtn").disabled = false;
+          playTrip();
+        });
+
+        document.getElementById("pauseTripBtn").addEventListener("click", () => {
+          pauseTrip();
+        });
+
+        document.getElementById("resetTripBtn").addEventListener("click", () => {
+          resetTrip();
+        });
+
+        document.getElementById("showPhotosOnTrip").addEventListener("change", (e) => {
+          showPhotosOnTrip = e.target.checked;
+        });
+
+        document.getElementById("speedRange").addEventListener("input", (e) => {
+          tripSpeed = +e.target.value;
+        });
+
+        document.getElementById("toggleGalleryBtn").addEventListener("click", () => {
+          toggleGallery();
+        });
+      })
+      .catch((error) => {
+        console.error("Error loading photos:", error);
       });
   </script>
 </body>
