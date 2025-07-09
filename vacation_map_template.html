@@ -31,7 +31,7 @@
     }
     #map {
       flex-grow: 1;
-      transition: height 0.3s ease;
+      transition: all 0.4s ease;
     }
     #gallery-toggle {
       text-align: center;
@@ -51,7 +51,7 @@
       border-top: 1px solid #ccc;
       max-height: 40vh;
       overflow-y: auto;
-      transition: max-height 0.3s ease, padding 0.3s ease;
+      transition: max-height 0.4s ease, padding 0.4s ease;
     }
     #gallery.hidden {
       max-height: 0;
@@ -112,6 +112,9 @@
     toggleBtn.addEventListener('click', () => {
       gallery.classList.toggle('hidden');
       toggleBtn.textContent = gallery.classList.contains('hidden') ? 'Show Gallery' : 'Hide Gallery';
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 400); // match transition duration
     });
 
     function convertToDecimal(coord, ref) {
@@ -203,7 +206,6 @@
         map.addLayer(plainGroup);
       }
 
-      // Update year filter
       const yearSelect = document.getElementById('yearFilter');
       const sortedYears = Array.from(yearSet).sort();
       yearSelect.innerHTML = '<option value="">All Years</option>';
