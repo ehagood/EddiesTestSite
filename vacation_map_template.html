@@ -52,12 +52,14 @@
       });
       document.getElementById("galleryContainer").innerHTML = '';
       photos.forEach(photo => {
-        const marker = L.marker([photo.lat, photo.lng]).addTo(map);
-        marker.bindPopup(`
-          <img src="${photo.path}" class="popup-image">
-          <div class="popup-caption">${photo.caption || ''}</div>
-          <button onclick="window.open('https://www.google.com/maps?q=&layer=c&cbll=${photo.lat},${photo.lng}', '_blank')">Street View</button>
-        `);
+        if (photo.lat !== undefined && photo.lng !== undefined) {
+          const marker = L.marker([photo.lat, photo.lng]).addTo(map);
+          marker.bindPopup(`
+            <img src="${photo.path}" class="popup-image">
+            <div class="popup-caption">${photo.caption || ''}</div>
+            <button onclick="window.open('https://www.google.com/maps?q=&layer=c&cbll=${photo.lat},${photo.lng}', '_blank')">Street View</button>
+          `);
+        }
         const img = document.createElement('img');
         img.src = photo.path;
         img.className = 'gallery-photo';
@@ -71,7 +73,7 @@
       const currentYear = cutoff > 0 ? tripPath[cutoff - 1].date.getFullYear() : '';
       document.getElementById("timelineYearLabel").textContent = currentYear;
       loadMarkers(filtered);
-      if (cutoff > 0 && tripPath[cutoff - 1].lat && tripPath[cutoff - 1].lng) {
+      if (cutoff > 0 && tripPath[cutoff - 1].lat !== undefined && tripPath[cutoff - 1].lng !== undefined) {
         const coord = [tripPath[cutoff - 1].lat, tripPath[cutoff - 1].lng];
         if (!tripCarMarker) {
           tripCarMarker = L.marker(coord, { icon: tripCarIcon }).addTo(map);
