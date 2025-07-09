@@ -30,6 +30,15 @@
     #map {
       height: 60%;
     }
+    #gallery-toggle {
+      text-align: center;
+      margin: 5px;
+    }
+    #gallery-toggle button {
+      padding: 5px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
     #gallery {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -70,6 +79,7 @@
     </select>
   </div>
   <div id="map"></div>
+  <div id="gallery-toggle"><button id="toggleGalleryBtn">Hide Gallery</button></div>
   <div id="gallery"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -87,6 +97,18 @@
     const clusterGroup = L.markerClusterGroup();
     const plainGroup = L.layerGroup();
     const yearSet = new Set();
+
+    const gallery = document.getElementById('gallery');
+    const toggleBtn = document.getElementById('toggleGalleryBtn');
+    toggleBtn.addEventListener('click', () => {
+      if (gallery.style.display === 'none') {
+        gallery.style.display = 'grid';
+        toggleBtn.textContent = 'Hide Gallery';
+      } else {
+        gallery.style.display = 'none';
+        toggleBtn.textContent = 'Show Gallery';
+      }
+    });
 
     function convertToDecimal(coord, ref) {
       if (!Array.isArray(coord) || coord.length !== 3) {
@@ -116,7 +138,7 @@
 
     function loadMarkers(photoFiles, filterYear = null) {
       clearMarkers();
-      document.getElementById('gallery').innerHTML = '';
+      gallery.innerHTML = '';
 
       photoFiles.forEach((entry) => {
         const file = typeof entry === 'string' ? entry : entry.path;
@@ -163,7 +185,7 @@
               const gridImg = document.createElement('img');
               gridImg.src = file;
               gridImg.alt = caption;
-              document.getElementById('gallery').appendChild(gridImg);
+              gallery.appendChild(gridImg);
             } else {
               console.log(`No GPS data found for ${file}`);
             }
@@ -211,4 +233,3 @@
   </script>
 </body>
 </html>
-
