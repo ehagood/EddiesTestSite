@@ -23,7 +23,22 @@
       box-shadow: 0 0 5px rgba(0,0,0,0.2);
     }
     #map {
-      height: 100%;
+      height: 60%;
+    }
+    #timeline {
+      margin: 10px;
+    }
+    #gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      padding: 10px;
+    }
+    #gallery img {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+      border-radius: 6px;
     }
     .popup-image {
       width: 150px;
@@ -39,8 +54,10 @@
 <body>
   <div id="controls">
     <label><input type="checkbox" id="toggleCluster"> Use Clustering</label>
+    <input type="month" id="dateFilter">
   </div>
   <div id="map"></div>
+  <div id="gallery"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -53,7 +70,7 @@
     }).addTo(map);
 
     let useClustering = false;
-    let markerGroup = L.layerGroup().addTo(map);
+    let allPhotos = [];
     const clusterGroup = L.markerClusterGroup();
     const plainGroup = L.layerGroup();
 
@@ -76,8 +93,16 @@
       map.removeLayer(plainGroup);
     }
 
-    function loadMarkers(photoFiles) {
+    function formatExifDate(exifDate) {
+      if (!exifDate || typeof exifDate !== 'string') return null;
+      const [date] = exifDate.split(" ");
+      const parts = date.split(":");
+      return parts.length === 3 ? `${parts[0]}-${parts[1]}` : null;
+    }
+
+    function loadMarkers(photoFiles, filterMonth = null) {
       clearMarkers();
+      document.getElementById('gallery').innerHTML = '';
 
       photoFiles.forEach((entry) => {
         const file = typeof entry === 'string' ? entry : entry.path;
@@ -92,6 +117,10 @@
             const lng = EXIF.getTag(this, 'GPSLongitude');
             const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
             const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
+            const date = EXIF.getTag(this, 'DateTimeOriginal');
+            const photoMonth = formatExifDate(date);
+
+            if (filterMonth && photoMonth !== filterMonth) return;
 
             if (lat && lng && latRef && lngRef) {
               const latitude = convertToDecimal(lat, latRef);
@@ -115,6 +144,11 @@
               } else {
                 plainGroup.addLayer(marker);
               }
+
+              const gridImg = document.createElement('img');
+              gridImg.src = file;
+              gridImg.alt = caption;
+              document.getElementById('gallery').appendChild(gridImg);
             } else {
               console.log(`No GPS data found for ${file}`);
             }
@@ -132,11 +166,17 @@
     fetch('photos.json')
       .then(response => response.json())
       .then(photoFiles => {
+        allPhotos = photoFiles;
         loadMarkers(photoFiles);
 
         document.getElementById('toggleCluster').addEventListener('change', (e) => {
           useClustering = e.target.checked;
-          loadMarkers(photoFiles);
+          loadMarkers(allPhotos, document.getElementById('dateFilter').value);
+        });
+
+        document.getElementById('dateFilter').addEventListener('change', (e) => {
+          const selectedMonth = e.target.value;
+          loadMarkers(allPhotos, selectedMonth);
         });
       })
       .catch(error => {
