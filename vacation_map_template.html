@@ -129,7 +129,6 @@
   </div>
 
   <script>
-    const correctPassword = "mysecret123"; // Change this to your password
     const overlay = document.getElementById("passwordOverlay");
     const input = document.getElementById("passwordInput");
     const message = document.getElementById("passwordMessage");
@@ -137,7 +136,7 @@
 
     let storedPassword = null;
 
-fetch('secret.txt')
+fetch('Aquarium.txt')
   .then(res => res.text())
   .then(encoded => {
     storedPassword = atob(encoded.trim()); // decode Base64
