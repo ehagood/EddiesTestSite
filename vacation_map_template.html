@@ -5,6 +5,8 @@
   <title>Vacation Photo Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <style>
     html, body, #map {
       height: 100%;
@@ -12,6 +14,12 @@
     }
     .popup-image {
       width: 150px;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .popup-caption {
+      font-size: 14px;
+      color: #333;
     }
   </style>
 </head>
@@ -20,12 +28,16 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script>
     const map = L.map('map').setView([20, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+
+    const markerClusterGroup = L.markerClusterGroup();
+    map.addLayer(markerClusterGroup);
 
     function convertToDecimal(coord, ref) {
       let decimal = coord[0] + coord[1] / 60 + coord[2] / 3600;
@@ -38,7 +50,10 @@
     fetch('photos.json')
       .then(response => response.json())
       .then(photoFiles => {
-        photoFiles.forEach((file) => {
+        photoFiles.forEach((entry) => {
+          const file = typeof entry === 'string' ? entry : entry.path;
+          const caption = typeof entry === 'string' ? '' : (entry.caption || '');
+
           const img = new Image();
           img.src = file;
           img.crossOrigin = "anonymous";
@@ -53,8 +68,13 @@
                 const latitude = convertToDecimal(lat, latRef);
                 const longitude = convertToDecimal(lng, lngRef);
 
-                const marker = L.marker([latitude, longitude]).addTo(map);
-                marker.bindPopup(`<img src="${file}" class="popup-image">`);
+                const marker = L.marker([latitude, longitude]);
+                const popupHtml = `
+                  <img src="${file}" class="popup-image">
+                  <div class="popup-caption">${caption}</div>
+                `;
+                marker.bindPopup(popupHtml);
+                markerClusterGroup.addLayer(marker);
               } else {
                 console.log(`No GPS data found for ${file}`);
               }
