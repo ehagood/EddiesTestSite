@@ -78,3 +78,347 @@
     #gallery img {
       width: 100%;
       height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+    }
+    #gallery img:hover {
+      transform: scale(1.05);
+    }
+    .popup-image {
+      width: 150px;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .popup-caption {
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <label><input type="checkbox" id="toggleCluster" /> Use Clustering</label>
+    <select id="yearFilter">
+      <option value="">All Years</option>
+    </select>
+    <div id="tripControls">
+      <button id="playTripBtn">Play Trip</button>
+      <button id="pauseTripBtn" disabled>Pause</button>
+      <label for="speedRange">Speed:</label>
+      <input type="range" id="speedRange" min="200" max="2000" value="1000" step="100" />
+    </div>
+  </div>
+  <div id="map"></div>
+  <div id="gallery-toggle">
+    <button id="toggleGalleryBtn">Hide Gallery</button>
+  </div>
+  <div id="gallery"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script>
+    const map = L.map("map").setView([20, 0], 2);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+
+    let useClustering = false;
+    let allPhotos = [];
+    const clusterGroup = L.markerClusterGroup();
+    const plainGroup = L.layerGroup();
+    const yearSet = new Set();
+
+    const gallery = document.getElementById("gallery");
+    const toggleBtn = document.getElementById("toggleGalleryBtn");
+    toggleBtn.addEventListener("click", () => {
+      gallery.classList.toggle("hidden");
+      toggleBtn.textContent = gallery.classList.contains("hidden")
+        ? "Show Gallery"
+        : "Hide Gallery";
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 400); // match transition duration
+    });
+
+    // Convert EXIF GPS to decimal degrees
+    function convertToDecimal(coord, ref) {
+      if (!Array.isArray(coord) || coord.length !== 3) {
+        console.warn("Invalid coordinate format:", coord);
+        return null;
+      }
+      let decimal = coord[0] + coord[1] / 60 + coord[2] / 3600;
+      if (ref === "S" || ref === "W") {
+        decimal = -decimal;
+      }
+      return decimal;
+    }
+
+    function clearMarkers() {
+      clusterGroup.clearLayers();
+      plainGroup.clearLayers();
+      map.removeLayer(clusterGroup);
+      map.removeLayer(plainGroup);
+    }
+
+    function formatExifYear(exifDate) {
+      if (!exifDate || typeof exifDate !== "string") return null;
+      const [date] = exifDate.split(" ");
+      const parts = date.split(":");
+      return parts.length === 3 ? `${parts[0]}` : null;
+    }
+
+    // --- Variables for trip animation ---
+    let tripMarker = null;
+    let tripPolyline = null;
+    let tripIndex = 0;
+    let tripPath = [];
+    let tripSpeed = 1000; // ms between moves
+    let isPaused = false;
+
+    // Animate marker moving between two latlngs smoothly
+    function animateMarker(marker, fromLatLng, toLatLng, duration, callback) {
+      const start = performance.now();
+
+      function step(now) {
+        if (isPaused) {
+          // Stop the animation if paused
+          return;
+        }
+
+        const elapsed = now - start;
+        const t = Math.min(elapsed / duration, 1);
+
+        const lat = fromLatLng.lat + (toLatLng.lat - fromLatLng.lat) * t;
+        const lng = fromLatLng.lng + (toLatLng.lng - fromLatLng.lng) * t;
+
+        marker.setLatLng([lat, lng]);
+
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else {
+          callback();
+        }
+      }
+      requestAnimationFrame(step);
+    }
+
+    // Play the trip animation
+    function playTrip() {
+      if (tripIndex >= tripPath.length - 1) {
+        tripIndex = 0; // loop back to start
+      }
+      isPaused = false;
+
+      if (!tripMarker) {
+        tripMarker = L.marker(tripPath[tripIndex].latlng, { icon: carIcon }).addTo(map);
+      }
+
+      if (tripPolyline) {
+        map.removeLayer(tripPolyline);
+      }
+      tripPolyline = L.polyline(
+        tripPath.slice(tripIndex).map((p) => p.latlng),
+        { color: "blue", weight: 3 }
+      ).addTo(map);
+
+      const nextIndex = tripIndex + 1;
+      if (nextIndex >= tripPath.length) {
+        tripIndex = 0;
+        document.getElementById("playTripBtn").disabled = false;
+        document.getElementById("pauseTripBtn").disabled = true;
+        return;
+      }
+
+      animateMarker(
+        tripMarker,
+        tripPath[tripIndex].latlng,
+        tripPath[nextIndex].latlng,
+        tripSpeed,
+        () => {
+          if (isPaused) return; // don't continue if paused
+          tripIndex++;
+          tripMarker.bindPopup(
+            `<img src="${tripPath[tripIndex].file}" class="popup-image" /><br>${tripPath[tripIndex].date}`
+          );
+          tripMarker.openPopup();
+          playTrip();
+        }
+      );
+    }
+
+    // Pause the trip animation
+    function pauseTrip() {
+      isPaused = true;
+      document.getElementById("playTripBtn").disabled = false;
+      document.getElementById("pauseTripBtn").disabled = true;
+      if (tripMarker) {
+        tripMarker.closePopup();
+      }
+    }
+
+    // Create a simple car icon for the trip marker
+    const carIcon = L.icon({
+      iconUrl:
+        "https://cdn-icons-png.flaticon.com/512/743/743007.png",
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+
+    // Load and place markers, build trip path for animation
+    function loadMarkers(photoFiles, filterYear = null) {
+      clearMarkers();
+      gallery.innerHTML = "";
+      tripPath = [];
+      tripIndex = 0;
+
+      const bounds = [];
+
+      photoFiles.forEach((entry) => {
+        const file = typeof entry === "string" ? entry : entry.path;
+        const caption = typeof entry === "string" ? "" : entry.caption || "";
+
+        const img = new Image();
+        img.src = file;
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          EXIF.getData(img, function () {
+            const lat = EXIF.getTag(this, "GPSLatitude");
+            const lng = EXIF.getTag(this, "GPSLongitude");
+            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+            const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+            const date = EXIF.getTag(this, "DateTimeOriginal");
+            const photoYear = formatExifYear(date);
+
+            if (photoYear) yearSet.add(photoYear);
+            if (filterYear && photoYear !== filterYear) return;
+
+            if (lat && lng && latRef && lngRef) {
+              const latitude = convertToDecimal(lat, latRef);
+              const longitude = convertToDecimal(lng, lngRef);
+
+              if (
+                latitude === null ||
+                longitude === null ||
+                latitude < -90 ||
+                latitude > 90 ||
+                longitude < -180 ||
+                longitude > 180
+              ) {
+                console.warn(
+                  `Out-of-range or invalid GPS for ${file}: (${latitude}, ${longitude})`
+                );
+                return;
+              }
+
+              bounds.push([latitude, longitude]);
+
+              // Add to tripPath with date and file info for animation
+              if (date) {
+                tripPath.push({
+                  latlng: L.latLng(latitude, longitude),
+                  date,
+                  file,
+                  caption,
+                });
+              }
+
+              const marker = L.marker([latitude, longitude]);
+              const popupHtml = `
+                <img src="${file}" class="popup-image" />
+                <div class="popup-caption">${caption}</div>
+              `;
+              marker.bindPopup(popupHtml);
+              if (useClustering) {
+                clusterGroup.addLayer(marker);
+              } else {
+                plainGroup.addLayer(marker);
+              }
+
+              const gridImg = document.createElement("img");
+              gridImg.src = file;
+              gridImg.alt = caption;
+              gallery.appendChild(gridImg);
+            } else {
+              console.log(`No GPS data found for ${file}`);
+            }
+          });
+        };
+      });
+
+      // Sort tripPath by date so animation follows chronological order
+      tripPath.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      if (useClustering) {
+        map.addLayer(clusterGroup);
+      } else {
+        map.addLayer(plainGroup);
+      }
+
+      if (bounds.length) {
+        setTimeout(() => {
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+        }, 500);
+      }
+
+      const yearSelect = document.getElementById("yearFilter");
+      const sortedYears = Array.from(yearSet).sort();
+      yearSelect.innerHTML = '<option value="">All Years</option>';
+      sortedYears.forEach((y) => {
+        const option = document.createElement("option");
+        option.value = y;
+        option.textContent = y;
+        yearSelect.appendChild(option);
+      });
+    }
+
+    fetch("photos.json")
+      .then((response) => response.json())
+      .then((photoFiles) => {
+        allPhotos = photoFiles;
+        loadMarkers(photoFiles);
+
+        document
+          .getElementById("toggleCluster")
+          .addEventListener("change", (e) => {
+            useClustering = e.target.checked;
+            loadMarkers(allPhotos, document.getElementById("yearFilter").value);
+          });
+
+        document
+          .getElementById("yearFilter")
+          .addEventListener("change", (e) => {
+            const selectedYear = e.target.value;
+            loadMarkers(allPhotos, selectedYear);
+          });
+
+        document
+          .getElementById("playTripBtn")
+          .addEventListener("click", () => {
+            document.getElementById("playTripBtn").disabled = true;
+            document.getElementById("pauseTripBtn").disabled = false;
+            if (!tripPath.length) return alert("No photos with GPS & date for trip.");
+            playTrip();
+          });
+
+        document
+          .getElementById("pauseTripBtn")
+          .addEventListener("click", () => {
+            pauseTrip();
+          });
+
+        document
+          .getElementById("speedRange")
+          .addEventListener("input", (e) => {
+            tripSpeed = parseInt(e.target.value, 10);
+          });
+      })
+      .catch((error) => {
+        console.error("Error loading photo list:", error);
+      });
+  </script>
+</body>
+</html>
