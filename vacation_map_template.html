@@ -8,9 +8,22 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <style>
-    html, body, #map {
+    html, body {
       height: 100%;
       margin: 0;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 5px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+    #map {
+      height: 100%;
     }
     .popup-image {
       width: 150px;
@@ -24,6 +37,9 @@
   </style>
 </head>
 <body>
+  <div id="controls">
+    <label><input type="checkbox" id="toggleCluster"> Use Clustering</label>
+  </div>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -36,8 +52,10 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const markerClusterGroup = L.markerClusterGroup();
-    map.addLayer(markerClusterGroup);
+    let useClustering = false;
+    let markerGroup = L.layerGroup().addTo(map);
+    const clusterGroup = L.markerClusterGroup();
+    const plainGroup = L.layerGroup();
 
     function convertToDecimal(coord, ref) {
       if (!Array.isArray(coord) || coord.length !== 3) {
@@ -51,48 +69,74 @@
       return decimal;
     }
 
+    function clearMarkers() {
+      clusterGroup.clearLayers();
+      plainGroup.clearLayers();
+      map.removeLayer(clusterGroup);
+      map.removeLayer(plainGroup);
+    }
+
+    function loadMarkers(photoFiles) {
+      clearMarkers();
+
+      photoFiles.forEach((entry) => {
+        const file = typeof entry === 'string' ? entry : entry.path;
+        const caption = typeof entry === 'string' ? '' : (entry.caption || '');
+
+        const img = new Image();
+        img.src = file;
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          EXIF.getData(img, function () {
+            const lat = EXIF.getTag(this, 'GPSLatitude');
+            const lng = EXIF.getTag(this, 'GPSLongitude');
+            const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+            const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
+
+            if (lat && lng && latRef && lngRef) {
+              const latitude = convertToDecimal(lat, latRef);
+              const longitude = convertToDecimal(lng, lngRef);
+
+              if (latitude === null || longitude === null ||
+                  latitude < -90 || latitude > 90 ||
+                  longitude < -180 || longitude > 180) {
+                console.warn(`Out-of-range or invalid GPS for ${file}: (${latitude}, ${longitude})`);
+                return;
+              }
+
+              const marker = L.marker([latitude, longitude]);
+              const popupHtml = `
+                <img src="${file}" class="popup-image">
+                <div class="popup-caption">${caption}</div>
+              `;
+              marker.bindPopup(popupHtml);
+              if (useClustering) {
+                clusterGroup.addLayer(marker);
+              } else {
+                plainGroup.addLayer(marker);
+              }
+            } else {
+              console.log(`No GPS data found for ${file}`);
+            }
+          });
+        };
+      });
+
+      if (useClustering) {
+        map.addLayer(clusterGroup);
+      } else {
+        map.addLayer(plainGroup);
+      }
+    }
+
     fetch('photos.json')
       .then(response => response.json())
       .then(photoFiles => {
-        photoFiles.forEach((entry) => {
-          const file = typeof entry === 'string' ? entry : entry.path;
-          const caption = typeof entry === 'string' ? '' : (entry.caption || '');
+        loadMarkers(photoFiles);
 
-          const img = new Image();
-          img.src = file;
-          img.crossOrigin = "anonymous";
-          img.onload = () => {
-            EXIF.getData(img, function () {
-              const lat = EXIF.getTag(this, 'GPSLatitude');
-              const lng = EXIF.getTag(this, 'GPSLongitude');
-              const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
-              const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
-
-              console.log(`GPS data for ${file}:`, { lat, latRef, lng, lngRef });
-
-              if (lat && lng && latRef && lngRef) {
-                const latitude = convertToDecimal(lat, latRef);
-                const longitude = convertToDecimal(lng, lngRef);
-
-                if (latitude === null || longitude === null ||
-                    latitude < -90 || latitude > 90 ||
-                    longitude < -180 || longitude > 180) {
-                  console.warn(`Out-of-range or invalid GPS for ${file}: (${latitude}, ${longitude})`);
-                  return;
-                }
-
-                const marker = L.marker([latitude, longitude]);
-                const popupHtml = `
-                  <img src="${file}" class="popup-image">
-                  <div class="popup-caption">${caption}</div>
-                `;
-                marker.bindPopup(popupHtml);
-                markerClusterGroup.addLayer(marker);
-              } else {
-                console.log(`No GPS data found for ${file}`);
-              }
-            });
-          };
+        document.getElementById('toggleCluster').addEventListener('change', (e) => {
+          useClustering = e.target.checked;
+          loadMarkers(photoFiles);
         });
       })
       .catch(error => {
