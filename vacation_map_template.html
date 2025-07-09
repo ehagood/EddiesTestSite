@@ -40,6 +40,10 @@
     map.addLayer(markerClusterGroup);
 
     function convertToDecimal(coord, ref) {
+      if (!Array.isArray(coord) || coord.length !== 3) {
+        console.warn('Invalid coordinate format:', coord);
+        return null;
+      }
       let decimal = coord[0] + coord[1] / 60 + coord[2] / 3600;
       if (ref === 'S' || ref === 'W') {
         decimal = -decimal;
@@ -64,9 +68,18 @@
               const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
               const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
 
+              console.log(`GPS data for ${file}:`, { lat, latRef, lng, lngRef });
+
               if (lat && lng && latRef && lngRef) {
                 const latitude = convertToDecimal(lat, latRef);
                 const longitude = convertToDecimal(lng, lngRef);
+
+                if (latitude === null || longitude === null ||
+                    latitude < -90 || latitude > 90 ||
+                    longitude < -180 || longitude > 180) {
+                  console.warn(`Out-of-range or invalid GPS for ${file}: (${latitude}, ${longitude})`);
+                  return;
+                }
 
                 const marker = L.marker([latitude, longitude]);
                 const popupHtml = `
