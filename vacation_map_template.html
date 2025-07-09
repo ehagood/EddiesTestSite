@@ -74,6 +74,11 @@
     button, input[type="checkbox"] {
       margin: 3px;
     }
+
+    /* Flip the icon horizontally */
+    .flipped-icon {
+      transform: scaleX(-1);
+    }
   </style>
 </head>
 <body>
@@ -129,11 +134,12 @@
     let gallery = document.getElementById("galleryContainer");
     let yearSet = new Set();
 
-    // Car icon (side-view sedan)
+    // Your chosen car icon, flipped horizontally via className
     const carIcon = L.icon({
-      iconUrl: "https://cdn-icons-png.flaticon.com/512/1086/1086477.png",
+      iconUrl: "https://cdn-icons-png.flaticon.com/512/744/744465.png",
       iconSize: [32, 32],
       iconAnchor: [16, 16],
+      className: "flipped-icon"
     });
 
     // Variables for trip animation
@@ -364,24 +370,22 @@
 
         document
           .getElementById("pauseTripBtn")
-          .addEventListener("click", () => {
-            pauseTrip();
-          });
+          .addEventListener("click", pauseTrip);
 
         document
           .getElementById("resetTripBtn")
-          .addEventListener("click", () => {
-            resetTrip();
-          });
+          .addEventListener("click", resetTrip);
 
         document
-          .getElementById("speedRange")
-          .addEventListener("input", (e) => {
-            tripSpeed = parseInt(e.target.value, 10);
+          .getElementById("showPhotosOnTrip")
+          .addEventListener("change", (e) => {
+            showPhotosOnTrip = e.target.checked;
           });
-      })
-      .catch((err) => {
-        console.error("Failed to load photos.json", err);
+
+        const speedRange = document.getElementById("speedRange");
+        speedRange.addEventListener("input", (e) => {
+          tripSpeed = +e.target.value;
+        });
       });
   </script>
 </body>
