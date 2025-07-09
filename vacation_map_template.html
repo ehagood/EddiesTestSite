@@ -12,6 +12,8 @@
       height: 100%;
       margin: 0;
       font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
     }
     #controls {
       position: absolute;
@@ -28,7 +30,8 @@
       gap: 5px;
     }
     #map {
-      height: 60%;
+      flex-grow: 1;
+      transition: height 0.3s ease;
     }
     #gallery-toggle {
       text-align: center;
@@ -48,6 +51,12 @@
       border-top: 1px solid #ccc;
       max-height: 40vh;
       overflow-y: auto;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    #gallery.hidden {
+      max-height: 0;
+      padding: 0;
+      overflow: hidden;
     }
     #gallery img {
       width: 100%;
@@ -101,13 +110,8 @@
     const gallery = document.getElementById('gallery');
     const toggleBtn = document.getElementById('toggleGalleryBtn');
     toggleBtn.addEventListener('click', () => {
-      if (gallery.style.display === 'none') {
-        gallery.style.display = 'grid';
-        toggleBtn.textContent = 'Hide Gallery';
-      } else {
-        gallery.style.display = 'none';
-        toggleBtn.textContent = 'Show Gallery';
-      }
+      gallery.classList.toggle('hidden');
+      toggleBtn.textContent = gallery.classList.contains('hidden') ? 'Show Gallery' : 'Hide Gallery';
     });
 
     function convertToDecimal(coord, ref) {
