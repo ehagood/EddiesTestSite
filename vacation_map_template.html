@@ -15,12 +15,15 @@
     #controls {
       position: absolute;
       top: 10px;
-      left: 10px;
+      right: 10px;
       z-index: 1000;
       background: white;
       padding: 5px;
       border-radius: 5px;
       box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
     }
     #map {
       height: 60%;
@@ -54,7 +57,9 @@
 <body>
   <div id="controls">
     <label><input type="checkbox" id="toggleCluster"> Use Clustering</label>
-    <input type="month" id="dateFilter">
+    <select id="yearFilter">
+      <option value="">All Years</option>
+    </select>
   </div>
   <div id="map"></div>
   <div id="gallery"></div>
@@ -73,6 +78,7 @@
     let allPhotos = [];
     const clusterGroup = L.markerClusterGroup();
     const plainGroup = L.layerGroup();
+    const yearSet = new Set();
 
     function convertToDecimal(coord, ref) {
       if (!Array.isArray(coord) || coord.length !== 3) {
@@ -93,14 +99,14 @@
       map.removeLayer(plainGroup);
     }
 
-    function formatExifDate(exifDate) {
+    function formatExifYear(exifDate) {
       if (!exifDate || typeof exifDate !== 'string') return null;
       const [date] = exifDate.split(" ");
       const parts = date.split(":");
-      return parts.length === 3 ? `${parts[0]}-${parts[1]}` : null;
+      return parts.length === 3 ? `${parts[0]}` : null;
     }
 
-    function loadMarkers(photoFiles, filterMonth = null) {
+    function loadMarkers(photoFiles, filterYear = null) {
       clearMarkers();
       document.getElementById('gallery').innerHTML = '';
 
@@ -118,9 +124,10 @@
             const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
             const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
             const date = EXIF.getTag(this, 'DateTimeOriginal');
-            const photoMonth = formatExifDate(date);
+            const photoYear = formatExifYear(date);
 
-            if (filterMonth && photoMonth !== filterMonth) return;
+            if (photoYear) yearSet.add(photoYear);
+            if (filterYear && photoYear !== filterYear) return;
 
             if (lat && lng && latRef && lngRef) {
               const latitude = convertToDecimal(lat, latRef);
@@ -161,6 +168,17 @@
       } else {
         map.addLayer(plainGroup);
       }
+
+      // Update year filter
+      const yearSelect = document.getElementById('yearFilter');
+      const sortedYears = Array.from(yearSet).sort();
+      yearSelect.innerHTML = '<option value="">All Years</option>';
+      sortedYears.forEach(y => {
+        const option = document.createElement('option');
+        option.value = y;
+        option.textContent = y;
+        yearSelect.appendChild(option);
+      });
     }
 
     fetch('photos.json')
@@ -171,12 +189,12 @@
 
         document.getElementById('toggleCluster').addEventListener('change', (e) => {
           useClustering = e.target.checked;
-          loadMarkers(allPhotos, document.getElementById('dateFilter').value);
+          loadMarkers(allPhotos, document.getElementById('yearFilter').value);
         });
 
-        document.getElementById('dateFilter').addEventListener('change', (e) => {
-          const selectedMonth = e.target.value;
-          loadMarkers(allPhotos, selectedMonth);
+        document.getElementById('yearFilter').addEventListener('change', (e) => {
+          const selectedYear = e.target.value;
+          loadMarkers(allPhotos, selectedYear);
         });
       })
       .catch(error => {
