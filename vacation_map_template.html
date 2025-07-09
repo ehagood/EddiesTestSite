@@ -438,7 +438,7 @@
 
     // Fetch photo list JSON and load markers
     let photos = [];
-    fetch("photos/photoList.json")
+    fetch("photos.json")
       .then((response) => {
         if (!response.ok) throw new Error("Photo list JSON not found");
         return response.json();
