@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Vacation Photo Map</title>
+  <title>Vacation Photo Map with Trip Animation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link
     rel="stylesheet"
@@ -29,7 +29,7 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      z-index: 1000;
+      z-index: 1100;
       background: white;
       padding: 10px;
       border-radius: 5px;
@@ -39,6 +39,12 @@
       align-items: flex-end;
       gap: 5px;
     }
+    #tripControls {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
     #map {
       flex-grow: 1;
       transition: all 0.4s ease;
@@ -46,6 +52,7 @@
     #gallery-toggle {
       text-align: center;
       margin: 5px;
+      z-index: 1000;
     }
     #gallery-toggle button {
       padding: 5px 10px;
@@ -92,12 +99,16 @@
 </head>
 <body>
   <div id="controls">
-    <label
-      ><input type="checkbox" id="toggleCluster" /> Use Clustering</label
-    >
+    <label><input type="checkbox" id="toggleCluster" /> Use Clustering</label>
     <select id="yearFilter">
       <option value="">All Years</option>
     </select>
+    <div id="tripControls">
+      <button id="playTripBtn">Play Trip</button>
+      <button id="pauseTripBtn" disabled>Pause</button>
+      <label for="speedRange">Speed:</label>
+      <input type="range" id="speedRange" min="200" max="2000" value="1000" step="100" />
+    </div>
   </div>
   <div id="map"></div>
   <div id="gallery-toggle">
@@ -133,6 +144,7 @@
       }, 400); // match transition duration
     });
 
+    // Convert EXIF GPS to decimal degrees
     function convertToDecimal(coord, ref) {
       if (!Array.isArray(coord) || coord.length !== 3) {
         console.warn("Invalid coordinate format:", coord);
@@ -159,9 +171,103 @@
       return parts.length === 3 ? `${parts[0]}` : null;
     }
 
+    // --- Variables for trip animation ---
+    let tripMarker = null;
+    let tripPolyline = null;
+    let tripIndex = 0;
+    let tripPath = [];
+    let tripTimer = null;
+    let tripSpeed = 1000; // ms between moves
+
+    // Animate marker moving between two latlngs smoothly
+    function animateMarker(marker, fromLatLng, toLatLng, duration, callback) {
+      const start = performance.now();
+
+      function step(now) {
+        const elapsed = now - start;
+        const t = Math.min(elapsed / duration, 1);
+
+        const lat = fromLatLng.lat + (toLatLng.lat - fromLatLng.lat) * t;
+        const lng = fromLatLng.lng + (toLatLng.lng - fromLatLng.lng) * t;
+
+        marker.setLatLng([lat, lng]);
+
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else {
+          callback();
+        }
+      }
+      requestAnimationFrame(step);
+    }
+
+    // Play the trip animation
+    function playTrip() {
+      if (tripIndex >= tripPath.length - 1) {
+        tripIndex = 0; // loop back to start
+      }
+      if (!tripMarker) {
+        tripMarker = L.marker(tripPath[tripIndex].latlng, {icon: carIcon}).addTo(map);
+      }
+
+      if (tripPolyline) {
+        map.removeLayer(tripPolyline);
+      }
+      tripPolyline = L.polyline(
+        tripPath.slice(tripIndex).map((p) => p.latlng),
+        {color: "blue", weight: 3}
+      ).addTo(map);
+
+      const nextIndex = tripIndex + 1;
+      if (nextIndex >= tripPath.length) {
+        tripIndex = 0;
+        document.getElementById("playTripBtn").disabled = false;
+        document.getElementById("pauseTripBtn").disabled = true;
+        return;
+      }
+
+      animateMarker(
+        tripMarker,
+        tripPath[tripIndex].latlng,
+        tripPath[nextIndex].latlng,
+        tripSpeed,
+        () => {
+          tripIndex++;
+          tripMarker.bindPopup(
+            `<img src="${tripPath[tripIndex].file}" class="popup-image" /><br>${tripPath[tripIndex].date}`
+          );
+          tripMarker.openPopup();
+          playTrip();
+        }
+      );
+    }
+
+    function pauseTrip() {
+      if (tripTimer) {
+        clearTimeout(tripTimer);
+        tripTimer = null;
+      }
+      if (tripMarker) {
+        tripMarker.closePopup();
+      }
+      document.getElementById("playTripBtn").disabled = false;
+      document.getElementById("pauseTripBtn").disabled = true;
+    }
+
+    // Create a simple car icon for the trip marker
+    const carIcon = L.icon({
+      iconUrl:
+        "https://cdn-icons-png.flaticon.com/512/743/743007.png",
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+
+    // Load and place markers, build trip path for animation
     function loadMarkers(photoFiles, filterYear = null) {
       clearMarkers();
       gallery.innerHTML = "";
+      tripPath = [];
+      tripIndex = 0;
 
       const bounds = [];
 
@@ -204,6 +310,16 @@
 
               bounds.push([latitude, longitude]);
 
+              // Add to tripPath with date and file info for animation
+              if (date) {
+                tripPath.push({
+                  latlng: L.latLng(latitude, longitude),
+                  date,
+                  file,
+                  caption,
+                });
+              }
+
               const marker = L.marker([latitude, longitude]);
               const popupHtml = `
                 <img src="${file}" class="popup-image" />
@@ -227,6 +343,9 @@
         };
       });
 
+      // Sort tripPath by date so animation follows chronological order
+      tripPath.sort((a, b) => new Date(a.date) - new Date(b.date));
+
       if (useClustering) {
         map.addLayer(clusterGroup);
       } else {
@@ -234,7 +353,6 @@
       }
 
       if (bounds.length) {
-        // Delay a bit to ensure markers added, then fit bounds smoothly
         setTimeout(() => {
           map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
         }, 500);
@@ -269,6 +387,31 @@
           .addEventListener("change", (e) => {
             const selectedYear = e.target.value;
             loadMarkers(allPhotos, selectedYear);
+          });
+
+        // Trip animation controls
+        document
+          .getElementById("playTripBtn")
+          .addEventListener("click", () => {
+            if (tripPath.length < 2) {
+              alert("Not enough points to animate the trip.");
+              return;
+            }
+            document.getElementById("playTripBtn").disabled = true;
+            document.getElementById("pauseTripBtn").disabled = false;
+            playTrip();
+          });
+
+        document
+          .getElementById("pauseTripBtn")
+          .addEventListener("click", () => {
+            pauseTrip();
+          });
+
+        document
+          .getElementById("speedRange")
+          .addEventListener("input", (e) => {
+            tripSpeed = parseInt(e.target.value, 10);
           });
       })
       .catch((error) => {
