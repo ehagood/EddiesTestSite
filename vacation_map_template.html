@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Vacation Photo Map</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+  />
   <style>
-    html, body {
+    html,
+    body {
       height: 100%;
       margin: 0;
       font-family: sans-serif;
@@ -23,7 +33,7 @@
       background: white;
       padding: 10px;
       border-radius: 5px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
       display: flex;
       flex-direction: column;
       align-items: flex-end;
@@ -63,7 +73,7 @@
       height: 100px;
       object-fit: cover;
       border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       transition: transform 0.2s ease;
     }
     #gallery img:hover {
@@ -82,23 +92,27 @@
 </head>
 <body>
   <div id="controls">
-    <label><input type="checkbox" id="toggleCluster"> Use Clustering</label>
+    <label
+      ><input type="checkbox" id="toggleCluster" /> Use Clustering</label
+    >
     <select id="yearFilter">
       <option value="">All Years</option>
     </select>
   </div>
   <div id="map"></div>
-  <div id="gallery-toggle"><button id="toggleGalleryBtn">Hide Gallery</button></div>
+  <div id="gallery-toggle">
+    <button id="toggleGalleryBtn">Hide Gallery</button>
+  </div>
   <div id="gallery"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script>
-    const map = L.map('map').setView([20, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const map = L.map("map").setView([20, 0], 2);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 18,
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
     let useClustering = false;
@@ -107,11 +121,13 @@
     const plainGroup = L.layerGroup();
     const yearSet = new Set();
 
-    const gallery = document.getElementById('gallery');
-    const toggleBtn = document.getElementById('toggleGalleryBtn');
-    toggleBtn.addEventListener('click', () => {
-      gallery.classList.toggle('hidden');
-      toggleBtn.textContent = gallery.classList.contains('hidden') ? 'Show Gallery' : 'Hide Gallery';
+    const gallery = document.getElementById("gallery");
+    const toggleBtn = document.getElementById("toggleGalleryBtn");
+    toggleBtn.addEventListener("click", () => {
+      gallery.classList.toggle("hidden");
+      toggleBtn.textContent = gallery.classList.contains("hidden")
+        ? "Show Gallery"
+        : "Hide Gallery";
       setTimeout(() => {
         map.invalidateSize();
       }, 400); // match transition duration
@@ -119,11 +135,11 @@
 
     function convertToDecimal(coord, ref) {
       if (!Array.isArray(coord) || coord.length !== 3) {
-        console.warn('Invalid coordinate format:', coord);
+        console.warn("Invalid coordinate format:", coord);
         return null;
       }
       let decimal = coord[0] + coord[1] / 60 + coord[2] / 3600;
-      if (ref === 'S' || ref === 'W') {
+      if (ref === "S" || ref === "W") {
         decimal = -decimal;
       }
       return decimal;
@@ -137,7 +153,7 @@
     }
 
     function formatExifYear(exifDate) {
-      if (!exifDate || typeof exifDate !== 'string') return null;
+      if (!exifDate || typeof exifDate !== "string") return null;
       const [date] = exifDate.split(" ");
       const parts = date.split(":");
       return parts.length === 3 ? `${parts[0]}` : null;
@@ -145,22 +161,24 @@
 
     function loadMarkers(photoFiles, filterYear = null) {
       clearMarkers();
-      gallery.innerHTML = '';
+      gallery.innerHTML = "";
+
+      const bounds = [];
 
       photoFiles.forEach((entry) => {
-        const file = typeof entry === 'string' ? entry : entry.path;
-        const caption = typeof entry === 'string' ? '' : (entry.caption || '');
+        const file = typeof entry === "string" ? entry : entry.path;
+        const caption = typeof entry === "string" ? "" : entry.caption || "";
 
         const img = new Image();
         img.src = file;
         img.crossOrigin = "anonymous";
         img.onload = () => {
           EXIF.getData(img, function () {
-            const lat = EXIF.getTag(this, 'GPSLatitude');
-            const lng = EXIF.getTag(this, 'GPSLongitude');
-            const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
-            const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
-            const date = EXIF.getTag(this, 'DateTimeOriginal');
+            const lat = EXIF.getTag(this, "GPSLatitude");
+            const lng = EXIF.getTag(this, "GPSLongitude");
+            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+            const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+            const date = EXIF.getTag(this, "DateTimeOriginal");
             const photoYear = formatExifYear(date);
 
             if (photoYear) yearSet.add(photoYear);
@@ -170,16 +188,25 @@
               const latitude = convertToDecimal(lat, latRef);
               const longitude = convertToDecimal(lng, lngRef);
 
-              if (latitude === null || longitude === null ||
-                  latitude < -90 || latitude > 90 ||
-                  longitude < -180 || longitude > 180) {
-                console.warn(`Out-of-range or invalid GPS for ${file}: (${latitude}, ${longitude})`);
+              if (
+                latitude === null ||
+                longitude === null ||
+                latitude < -90 ||
+                latitude > 90 ||
+                longitude < -180 ||
+                longitude > 180
+              ) {
+                console.warn(
+                  `Out-of-range or invalid GPS for ${file}: (${latitude}, ${longitude})`
+                );
                 return;
               }
 
+              bounds.push([latitude, longitude]);
+
               const marker = L.marker([latitude, longitude]);
               const popupHtml = `
-                <img src="${file}" class="popup-image">
+                <img src="${file}" class="popup-image" />
                 <div class="popup-caption">${caption}</div>
               `;
               marker.bindPopup(popupHtml);
@@ -189,7 +216,7 @@
                 plainGroup.addLayer(marker);
               }
 
-              const gridImg = document.createElement('img');
+              const gridImg = document.createElement("img");
               gridImg.src = file;
               gridImg.alt = caption;
               gallery.appendChild(gridImg);
@@ -206,35 +233,46 @@
         map.addLayer(plainGroup);
       }
 
-      const yearSelect = document.getElementById('yearFilter');
+      if (bounds.length) {
+        // Delay a bit to ensure markers added, then fit bounds smoothly
+        setTimeout(() => {
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+        }, 500);
+      }
+
+      const yearSelect = document.getElementById("yearFilter");
       const sortedYears = Array.from(yearSet).sort();
       yearSelect.innerHTML = '<option value="">All Years</option>';
-      sortedYears.forEach(y => {
-        const option = document.createElement('option');
+      sortedYears.forEach((y) => {
+        const option = document.createElement("option");
         option.value = y;
         option.textContent = y;
         yearSelect.appendChild(option);
       });
     }
 
-    fetch('photos.json')
-      .then(response => response.json())
-      .then(photoFiles => {
+    fetch("photos.json")
+      .then((response) => response.json())
+      .then((photoFiles) => {
         allPhotos = photoFiles;
         loadMarkers(photoFiles);
 
-        document.getElementById('toggleCluster').addEventListener('change', (e) => {
-          useClustering = e.target.checked;
-          loadMarkers(allPhotos, document.getElementById('yearFilter').value);
-        });
+        document
+          .getElementById("toggleCluster")
+          .addEventListener("change", (e) => {
+            useClustering = e.target.checked;
+            loadMarkers(allPhotos, document.getElementById("yearFilter").value);
+          });
 
-        document.getElementById('yearFilter').addEventListener('change', (e) => {
-          const selectedYear = e.target.value;
-          loadMarkers(allPhotos, selectedYear);
-        });
+        document
+          .getElementById("yearFilter")
+          .addEventListener("change", (e) => {
+            const selectedYear = e.target.value;
+            loadMarkers(allPhotos, selectedYear);
+          });
       })
-      .catch(error => {
-        console.error('Error loading photo list:', error);
+      .catch((error) => {
+        console.error("Error loading photo list:", error);
       });
   </script>
 </body>
