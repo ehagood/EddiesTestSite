@@ -135,15 +135,27 @@
     const message = document.getElementById("passwordMessage");
     const button = document.getElementById("passwordSubmit");
 
-    function checkPassword() {
-      if (input.value === correctPassword) {
-        overlay.style.display = "none";
-      } else {
-        message.textContent = "Incorrect password, try again.";
-        input.value = "";
-        input.focus();
-      }
-    }
+    let storedPassword = null;
+
+fetch('secret.txt')
+  .then(res => res.text())
+  .then(encoded => {
+    storedPassword = atob(encoded.trim()); // decode Base64
+  });
+
+function checkPassword() {
+  if (!storedPassword) {
+    alert("Password not loaded yet, please wait.");
+    return;
+  }
+  if (input.value === storedPassword) {
+    overlay.style.display = "none";
+  } else {
+    message.textContent = "Incorrect password, try again.";
+    input.value = "";
+    input.focus();
+  }
+}
 
     button.addEventListener("click", checkPassword);
     input.addEventListener("keydown", function(event) {
