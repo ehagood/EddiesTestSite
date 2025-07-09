@@ -11,6 +11,7 @@
     html, body {
       height: 100%;
       margin: 0;
+      font-family: sans-serif;
     }
     #controls {
       position: absolute;
@@ -18,30 +19,37 @@
       right: 10px;
       z-index: 1000;
       background: white;
-      padding: 5px;
+      padding: 10px;
       border-radius: 5px;
       box-shadow: 0 0 5px rgba(0,0,0,0.2);
       display: flex;
       flex-direction: column;
       align-items: flex-end;
+      gap: 5px;
     }
     #map {
       height: 60%;
     }
-    #timeline {
-      margin: 10px;
-    }
     #gallery {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 6px;
       padding: 10px;
+      background-color: #f9f9f9;
+      border-top: 1px solid #ccc;
+      max-height: 40vh;
+      overflow-y: auto;
     }
     #gallery img {
       width: 100%;
-      height: auto;
+      height: 100px;
       object-fit: cover;
-      border-radius: 6px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+    }
+    #gallery img:hover {
+      transform: scale(1.05);
     }
     .popup-image {
       width: 150px;
@@ -203,3 +211,4 @@
   </script>
 </body>
 </html>
+
