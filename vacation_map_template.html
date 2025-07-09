@@ -57,12 +57,13 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       padding: 10px;
       border-radius: 8px;
       z-index: 1000;
       box-shadow: 0 0 5px rgba(0,0,0,0.2);
       font-size: 14px;
+      user-select: none;
     }
     #timeline {
       text-align: center;
@@ -74,7 +75,6 @@
     button, input[type="checkbox"] {
       margin: 3px;
     }
-
     /* Flip the icon horizontally */
     .flipped-icon {
       transform: scaleX(-1);
@@ -105,6 +105,8 @@
     <br />
     <label for="speedRange">Speed:</label>
     <input type="range" id="speedRange" min="500" max="5000" step="100" value="1500" />
+    <br />
+    <button id="toggleGalleryBtn">Hide Gallery</button>
   </div>
 
   <div id="timeline"></div>
@@ -134,7 +136,7 @@
     let gallery = document.getElementById("galleryContainer");
     let yearSet = new Set();
 
-    // Your chosen car icon, flipped horizontally via className
+    // Flipped car icon
     const carIcon = L.icon({
       iconUrl: "https://cdn-icons-png.flaticon.com/512/744/744465.png",
       iconSize: [32, 32],
@@ -142,7 +144,7 @@
       className: "flipped-icon"
     });
 
-    // Variables for trip animation
+    // Trip animation variables
     let tripPath = [];
     let tripIndex = 0;
     let tripMarker = null;
@@ -150,11 +152,38 @@
     let tripSpeed = 1500;
     let showPhotosOnTrip = true;
 
-    function formatExifYear(dateStr) {
+    // Polyline drawn only during play
+    let tripLine = null;
+
+    // Gallery state
+    let galleryVisible = true;
+
+    // Utility: parse EXIF date string to Date or null
+    function parseExifDate(dateStr) {
       if (!dateStr) return null;
-      const year = dateStr.split(":")[0];
-      if (/^\d{4}$/.test(year)) return year;
-      return null;
+      // EXIF date format: "YYYY:MM:DD HH:MM:SS"
+      const parts = dateStr.split(" ");
+      if (parts.length !== 2) return null;
+      const dateParts = parts[0].split(":");
+      const timeParts = parts[1].split(":");
+      if (
+        dateParts.length !== 3 ||
+        timeParts.length !== 3
+      ) return null;
+      return new Date(
+        +dateParts[0],
+        +dateParts[1] - 1,
+        +dateParts[2],
+        +timeParts[0],
+        +timeParts[1],
+        +timeParts[2]
+      );
+    }
+
+    // Format EXIF year (for filter dropdown)
+    function formatExifYear(dateStr) {
+      const d = parseExifDate(dateStr);
+      return d ? d.getFullYear().toString() : null;
     }
 
     function convertToDecimal(coord, ref) {
@@ -174,9 +203,9 @@
       tripPath = [];
       tripIndex = 0;
       document.getElementById("timeline").textContent = "";
-      if (window.tripLine) {
-        map.removeLayer(window.tripLine);
-        window.tripLine = null;
+      if (tripLine) {
+        map.removeLayer(tripLine);
+        tripLine = null;
       }
     }
 
@@ -187,7 +216,6 @@
         yearSet.clear();
         const bounds = [];
 
-        // Helper to track all load promises
         let loadPromises = photoFiles.map((entry) => {
           return new Promise((res) => {
             const file = typeof entry === "string" ? entry : entry.path;
@@ -202,8 +230,8 @@
                 const lng = EXIF.getTag(this, "GPSLongitude");
                 const latRef = EXIF.getTag(this, "GPSLatitudeRef");
                 const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
-                const date = EXIF.getTag(this, "DateTimeOriginal");
-                const photoYear = formatExifYear(date);
+                const dateStr = EXIF.getTag(this, "DateTimeOriginal");
+                const photoYear = formatExifYear(dateStr);
 
                 if (photoYear) yearSet.add(photoYear);
                 if (filterYear && photoYear !== filterYear) {
@@ -244,13 +272,15 @@
                     plainGroup.addLayer(marker);
                   }
 
-                  // Collect trip path data only if date exists
-                  if (date) {
+                  // Prepare tripPath with parsed date
+                  const parsedDate = parseExifDate(dateStr);
+                  if (parsedDate) {
                     tripPath.push({
                       latLng: L.latLng(latitude, longitude),
-                      date: date,
+                      date: parsedDate,
                       file: file,
                       caption: caption,
+                      dateStr: dateStr,
                     });
                   }
 
@@ -266,7 +296,6 @@
             };
 
             img.onerror = () => {
-              // Skip on error but resolve to avoid hanging
               console.warn(`Failed to load image ${file}`);
               res();
             };
@@ -274,23 +303,10 @@
         });
 
         Promise.all(loadPromises).then(() => {
-          // Now all images loaded and EXIF read, so sort tripPath
-          tripPath.sort((a, b) => new Date(a.date) - new Date(b.date));
+          // Sort tripPath by parsed Date ascending
+          tripPath.sort((a, b) => a.date - b.date);
+          console.log("Trip path dates in order:", tripPath.map(p => p.date.toISOString()));
 
-          // Draw polyline after sorting
-          if (tripPath.length > 1) {
-            if (window.tripLine) {
-              map.removeLayer(window.tripLine);
-            }
-            window.tripLine = L.polyline(tripPath.map((p) => p.latLng), {
-              color: "blue",
-              weight: 3,
-              opacity: 0.7,
-              smoothFactor: 1,
-            }).addTo(map);
-          }
-
-          // Fit bounds to all markers
           if (bounds.length) {
             map.fitBounds(bounds);
           }
@@ -306,17 +322,33 @@
             yearSelect.appendChild(option);
           });
 
+          // Add marker layers
+          if (useClustering) {
+            map.addLayer(clusterGroup);
+            map.removeLayer(plainGroup);
+          } else {
+            map.addLayer(plainGroup);
+            map.removeLayer(clusterGroup);
+          }
+
           resolve();
         });
-
-        if (useClustering) {
-          map.addLayer(clusterGroup);
-          map.removeLayer(plainGroup);
-        } else {
-          map.addLayer(plainGroup);
-          map.removeLayer(clusterGroup);
-        }
       });
+    }
+
+    function drawTripLine() {
+      if (tripLine) {
+        map.removeLayer(tripLine);
+        tripLine = null;
+      }
+      if (tripPath.length > 1) {
+        tripLine = L.polyline(tripPath.map((p) => p.latLng), {
+          color: "blue",
+          weight: 3,
+          opacity: 0.7,
+          smoothFactor: 1,
+        }).addTo(map);
+      }
     }
 
     function updateTimeline(dateStr) {
@@ -325,6 +357,10 @@
     }
 
     function playTrip() {
+      if (tripIndex === 0) {
+        drawTripLine(); // Draw polyline only when starting trip
+      }
+
       if (tripIndex >= tripPath.length) {
         resetTrip();
         return;
@@ -343,14 +379,14 @@
         tripMarker.bindPopup(`
           <img src="${step.file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;">
           <div>${step.caption}</div>
-          <div>${step.date}</div>
+          <div>${step.date.toISOString().slice(0,19).replace('T',' ')}</div>
         `);
         tripMarker.openPopup();
       } else {
         tripMarker.closePopup();
       }
 
-      updateTimeline(step.date);
+      updateTimeline(step.date.toISOString().slice(0,10));
 
       tripIndex++;
       tripTimer = setTimeout(playTrip, tripSpeed);
@@ -373,61 +409,90 @@
         tripMarker = null;
       }
       updateTimeline("");
+      if (tripLine) {
+        map.removeLayer(tripLine);
+        tripLine = null;
+      }
       document.getElementById("playTripBtn").disabled = false;
       document.getElementById("pauseTripBtn").disabled = true;
     }
 
-    // Initialize
-    let allPhotos = [];
+    // Toggle gallery show/hide
+    function toggleGallery() {
+      galleryVisible = !galleryVisible;
+      const galleryContainer = document.getElementById("galleryContainer");
+      const btn = document.getElementById("toggleGalleryBtn");
+      if (galleryVisible) {
+        galleryContainer.classList.remove("hidden");
+        btn.textContent = "Hide Gallery";
+        // Shrink map height so gallery is visible
+        document.getElementById("map").style.height = "calc(100% - 250px)";
+      } else {
+        galleryContainer.classList.add("hidden");
+        btn.textContent = "Show Gallery";
+        document.getElementById("map").style.height = "100%";
+      }
+      map.invalidateSize();
+    }
 
-    fetch("photos.json")
-      .then((res) => res.json())
-      .then(async (photoFiles) => {
-        allPhotos = photoFiles;
-        await loadMarkers(photoFiles);
+    // Initial gallery visible and map height
+    document.getElementById("map").style.height = "calc(100% - 250px)";
 
-        document
-          .getElementById("toggleCluster")
-          .addEventListener("change", (e) => {
-            useClustering = e.target.checked;
-            loadMarkers(allPhotos, document.getElementById("yearFilter").value);
-          });
+    // Sample photos array - Replace with your real list or generate via GitHub Actions
+    const photos = [
+      // Example: "photos/IMG_2712.jpeg",
+    ];
 
-        document.getElementById("yearFilter").addEventListener("change", (e) => {
-          const selectedYear = e.target.value;
-          loadMarkers(allPhotos, selectedYear);
+    // Load initial markers and setup UI
+    loadMarkers(photos).then(() => {
+      // Setup event listeners
+      document
+        .getElementById("toggleCluster")
+        .addEventListener("change", (e) => {
+          useClustering = e.target.checked;
+          loadMarkers(photos, document.getElementById("yearFilter").value);
         });
 
-        document
-          .getElementById("playTripBtn")
-          .addEventListener("click", () => {
-            document.getElementById("playTripBtn").disabled = true;
-            document.getElementById("pauseTripBtn").disabled = false;
-            playTrip();
-          });
-
-        document
-          .getElementById("pauseTripBtn")
-          .addEventListener("click", () => {
-            pauseTrip();
-          });
-
-        document
-          .getElementById("resetTripBtn")
-          .addEventListener("click", () => {
-            resetTrip();
-          });
-
-        document
-          .getElementById("showPhotosOnTrip")
-          .addEventListener("change", (e) => {
-            showPhotosOnTrip = e.target.checked;
-          });
-
-        document.getElementById("speedRange").addEventListener("input", (e) => {
-          tripSpeed = +e.target.value;
+      document
+        .getElementById("yearFilter")
+        .addEventListener("change", (e) => {
+          loadMarkers(photos, e.target.value);
         });
+
+      document
+        .getElementById("playTripBtn")
+        .addEventListener("click", () => {
+          document.getElementById("playTripBtn").disabled = true;
+          document.getElementById("pauseTripBtn").disabled = false;
+          playTrip();
+        });
+
+      document
+        .getElementById("pauseTripBtn")
+        .addEventListener("click", () => {
+          pauseTrip();
+        });
+
+      document
+        .getElementById("resetTripBtn")
+        .addEventListener("click", () => {
+          resetTrip();
+        });
+
+      document
+        .getElementById("showPhotosOnTrip")
+        .addEventListener("change", (e) => {
+          showPhotosOnTrip = e.target.checked;
+        });
+
+      document.getElementById("speedRange").addEventListener("input", (e) => {
+        tripSpeed = +e.target.value;
       });
+
+      document.getElementById("toggleGalleryBtn").addEventListener("click", () => {
+        toggleGallery();
+      });
+    });
   </script>
 </body>
 </html>
