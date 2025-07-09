@@ -103,7 +103,7 @@
     <button id="pauseTripBtn" disabled>Pause Trip</button>
     <button id="resetTripBtn">Reset Trip</button>
     <br />
-    <label for="speedRange">Speed:</label>
+    <label for="speedRange">Speed (ms):</label>
     <input type="range" id="speedRange" min="500" max="5000" step="100" value="1500" />
     <br />
     <button id="toggleGalleryBtn">Hide Gallery</button>
@@ -408,28 +408,26 @@
         map.removeLayer(tripMarker);
         tripMarker = null;
       }
-      updateTimeline("");
       if (tripLine) {
         map.removeLayer(tripLine);
         tripLine = null;
       }
+      updateTimeline("");
       document.getElementById("playTripBtn").disabled = false;
       document.getElementById("pauseTripBtn").disabled = true;
     }
 
-    // Toggle gallery show/hide
     function toggleGallery() {
       galleryVisible = !galleryVisible;
-      const galleryContainer = document.getElementById("galleryContainer");
-      const btn = document.getElementById("toggleGalleryBtn");
+      const galleryEl = document.getElementById("galleryContainer");
+      const toggleBtn = document.getElementById("toggleGalleryBtn");
       if (galleryVisible) {
-        galleryContainer.classList.remove("hidden");
-        btn.textContent = "Hide Gallery";
-        // Shrink map height so gallery is visible
+        galleryEl.classList.remove("hidden");
+        toggleBtn.textContent = "Hide Gallery";
         document.getElementById("map").style.height = "calc(100% - 250px)";
       } else {
-        galleryContainer.classList.add("hidden");
-        btn.textContent = "Show Gallery";
+        galleryEl.classList.add("hidden");
+        toggleBtn.textContent = "Show Gallery";
         document.getElementById("map").style.height = "100%";
       }
       map.invalidateSize();
@@ -438,61 +436,57 @@
     // Initial gallery visible and map height
     document.getElementById("map").style.height = "calc(100% - 250px)";
 
-    // Sample photos array - Replace with your real list or generate via GitHub Actions
-    const photos = [
-      // Example: "photos/IMG_2712.jpeg",
-    ];
-
-    // Load initial markers and setup UI
-    loadMarkers(photos).then(() => {
-      // Setup event listeners
-      document
-        .getElementById("toggleCluster")
-        .addEventListener("change", (e) => {
+    // Fetch photo list JSON and load markers
+    let photos = [];
+    fetch("photos/photoList.json")
+      .then((response) => {
+        if (!response.ok) throw new Error("Photo list JSON not found");
+        return response.json();
+      })
+      .then((data) => {
+        photos = data;
+        return loadMarkers(photos);
+      })
+      .then(() => {
+        // Setup event listeners after photos loaded
+        document.getElementById("toggleCluster").addEventListener("change", (e) => {
           useClustering = e.target.checked;
           loadMarkers(photos, document.getElementById("yearFilter").value);
         });
 
-      document
-        .getElementById("yearFilter")
-        .addEventListener("change", (e) => {
+        document.getElementById("yearFilter").addEventListener("change", (e) => {
           loadMarkers(photos, e.target.value);
         });
 
-      document
-        .getElementById("playTripBtn")
-        .addEventListener("click", () => {
+        document.getElementById("playTripBtn").addEventListener("click", () => {
           document.getElementById("playTripBtn").disabled = true;
           document.getElementById("pauseTripBtn").disabled = false;
           playTrip();
         });
 
-      document
-        .getElementById("pauseTripBtn")
-        .addEventListener("click", () => {
+        document.getElementById("pauseTripBtn").addEventListener("click", () => {
           pauseTrip();
         });
 
-      document
-        .getElementById("resetTripBtn")
-        .addEventListener("click", () => {
+        document.getElementById("resetTripBtn").addEventListener("click", () => {
           resetTrip();
         });
 
-      document
-        .getElementById("showPhotosOnTrip")
-        .addEventListener("change", (e) => {
+        document.getElementById("showPhotosOnTrip").addEventListener("change", (e) => {
           showPhotosOnTrip = e.target.checked;
         });
 
-      document.getElementById("speedRange").addEventListener("input", (e) => {
-        tripSpeed = +e.target.value;
-      });
+        document.getElementById("speedRange").addEventListener("input", (e) => {
+          tripSpeed = +e.target.value;
+        });
 
-      document.getElementById("toggleGalleryBtn").addEventListener("click", () => {
-        toggleGallery();
+        document.getElementById("toggleGalleryBtn").addEventListener("click", () => {
+          toggleGallery();
+        });
+      })
+      .catch((error) => {
+        console.error("Error loading photos:", error);
       });
-    });
   </script>
 </body>
 </html>
