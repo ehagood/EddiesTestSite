@@ -82,6 +82,83 @@
   </style>
 </head>
 <body>
+
+<body>
+  <style>
+    #passwordOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    #passwordOverlay input {
+      font-size: 1.2em;
+      padding: 8px;
+      margin-bottom: 10px;
+      width: 200px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+    }
+    #passwordOverlay button {
+      font-size: 1em;
+      padding: 8px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+      border: none;
+      background: #007bff;
+      color: white;
+    }
+    #passwordOverlay button:hover {
+      background: #0056b3;
+    }
+    #passwordMessage {
+      color: red;
+      margin-top: 10px;
+      height: 1.2em;
+    }
+  </style>
+
+  <div id="passwordOverlay">
+    <input type="password" id="passwordInput" placeholder="Enter password" />
+    <button id="passwordSubmit">Enter</button>
+    <div id="passwordMessage"></div>
+  </div>
+
+  <script>
+    const correctPassword = "mysecret123"; // Change this to your password
+    const overlay = document.getElementById("passwordOverlay");
+    const input = document.getElementById("passwordInput");
+    const message = document.getElementById("passwordMessage");
+    const button = document.getElementById("passwordSubmit");
+
+    function checkPassword() {
+      if (input.value === correctPassword) {
+        overlay.style.display = "none";
+      } else {
+        message.textContent = "Incorrect password, try again.";
+        input.value = "";
+        input.focus();
+      }
+    }
+
+    button.addEventListener("click", checkPassword);
+    input.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        checkPassword();
+      }
+    });
+
+    // Optional: focus input on load
+    input.focus();
+  </script>
+
+  <!-- Your existing content below here -->
+
+  
   <div id="map"></div>
 
   <div id="controls">
