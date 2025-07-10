@@ -77,16 +77,63 @@
     .flipped-icon {
       transform: scaleX(-1);
     }
+    #passwordOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    #passwordOverlay input {
+      font-size: 1.2em;
+      padding: 8px;
+      margin-bottom: 10px;
+      width: 200px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+    }
+    #passwordOverlay button {
+      font-size: 1em;
+      padding: 8px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+      border: none;
+      background: #007bff;
+      color: white;
+    }
+    #passwordOverlay button:hover {
+      background: #0056b3;
+    }
+    #passwordMessage {
+      color: red;
+      margin-top: 10px;
+      height: 1.2em;
+    }
   </style>
 </head>
 <body>
-  <!-- Password Overlay (same as before) -->
-  <!-- ... PASSWORD OVERLAY CODE HERE ... -->
+  <div id="passwordOverlay">
+    <div style="text-align:center; margin-bottom:20px;">
+      <img 
+        src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fthumbs.dreamstime.com%2Fb%2Fharbour-town-lighthouse-hilton-head-island-south-carolina-view-privately-built-private-aid-to-navigation-234301824.jpg&f=1&nofb=1&ipt=8850264225f7c5270ef2f65bc8730258ffe60be7dba1ea01efc17c45d8181636" 
+        alt="Hilton Head Lighthouse" 
+        style="max-width: 300px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 15px;"
+      />
+      <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #007bff; margin: 0;">
+        Missy and Eddie's Trip Photos
+      </h2>
+    </div>
+    <input type="password" id="passwordInput" placeholder="Enter password" />
+    <button id="passwordSubmit">Enter</button>
+    <div id="passwordMessage"></div>
+  </div>
 
   <div id="map"></div>
   <div id="progressWrapper"><div id="progressBar" style="width: 0%"></div></div>
   <div id="controls">
-    <!-- Existing controls -->
     <label><input type="checkbox" id="toggleCluster" checked /> Use Clustering</label><br />
     <label for="yearFilter">Filter Year:</label>
     <select id="yearFilter"><option value="">All Years</option></select><br />
@@ -100,132 +147,49 @@
   </div>
   <div id="timeline"></div>
   <div id="galleryContainer"></div>
-
   <audio id="tripSound" src="https://cdn.pixabay.com/download/audio/2022/08/15/audio_0e41e00c25.mp3?filename=car-engine-sound-114848.mp3"></audio>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+  <script src="map-logic.js"></script> <!-- External file contains marker loading logic -->
 
   <script>
-    // ... all your existing setup code ...
+    const overlay = document.getElementById("passwordOverlay");
+    const input = document.getElementById("passwordInput");
+    const message = document.getElementById("passwordMessage");
+    const button = document.getElementById("passwordSubmit");
 
-    function animateMarker(marker, fromLatLng, toLatLng, duration = 1000, onFinish = null) {
-      const start = performance.now();
-      function step(timestamp) {
-        const progress = Math.min((timestamp - start) / duration, 1);
-        const lat = fromLatLng.lat + (toLatLng.lat - fromLatLng.lat) * progress;
-        const lng = fromLatLng.lng + (toLatLng.lng - fromLatLng.lng) * progress;
-        marker.setLatLng([lat, lng]);
-        if (progress < 1) {
-          requestAnimationFrame(step);
-        } else if (onFinish) {
-          onFinish();
-        }
-      }
-      requestAnimationFrame(step);
-    }
+    let storedPassword = null;
 
-    function showRipple(latlng) {
-      const ripple = L.circle(latlng, {
-        radius: 20,
-        color: "#007bff",
-        opacity: 0.6,
-        fillOpacity: 0.2,
-        weight: 2,
-      }).addTo(map);
-      setTimeout(() => map.removeLayer(ripple), 800);
-    }
+    fetch('Aquarium.txt')
+      .then(res => res.text())
+      .then(encoded => {
+        storedPassword = atob(encoded.trim());
+      });
 
-    function zoomToPoint(latlng) {
-      map.setView(latlng, 13);
-    }
-
-    function zoomToTripBounds() {
-      const bounds = L.latLngBounds(tripPath.map(p => p.latLng));
-      map.fitBounds(bounds);
-    }
-
-    function showCurrentPhotoInGallery(step) {
-      gallery.innerHTML = "";
-      const img = document.createElement("img");
-      img.src = step.file;
-      img.alt = step.caption;
-      img.style.borderRadius = "4px";
-      gallery.appendChild(img);
-    }
-
-    function updateProgressBar(index) {
-      const progress = (index / (tripPath.length - 1)) * 100;
-      document.getElementById("progressBar").style.width = progress + "%";
-    }
-
-    function playTrip() {
-      if (tripIndex >= tripPath.length - 1) {
-        resetTrip();
-        zoomToTripBounds();
+    function checkPassword() {
+      if (!storedPassword) {
+        alert("Password not loaded yet, please wait.");
         return;
       }
-
-      const fromStep = tripPath[tripIndex];
-      const toStep = tripPath[tripIndex + 1];
-      const sound = document.getElementById("tripSound");
-
-      if (!tripMarker) {
-        tripMarker = L.marker(fromStep.latLng, { icon: carIcon }).addTo(map);
-      }
-
-      updateTimeline(fromStep.date.toISOString().slice(0, 10));
-      updateProgressBar(tripIndex);
-      zoomToPoint(fromStep.latLng);
-      showRipple(fromStep.latLng);
-
-      if (showPhotosOnTrip) {
-        tripMarker.bindPopup(`
-          <img src="${fromStep.file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;">
-          <div>${fromStep.caption}</div>
-          <div>${fromStep.date.toISOString().slice(0,19).replace('T',' ')}</div>
-        `);
-        tripMarker.openPopup();
-        showCurrentPhotoInGallery(fromStep);
+      if (input.value === storedPassword) {
+        overlay.style.display = "none";
+        initializeMap(); // trigger data load after auth
       } else {
-        tripMarker.closePopup();
+        message.textContent = "Incorrect password, try again.";
+        input.value = "";
+        input.focus();
       }
-
-      sound.currentTime = 0;
-      sound.play();
-
-      animateMarker(tripMarker, fromStep.latLng, toStep.latLng, tripSpeed, () => {
-        tripIndex++;
-        tripTimer = setTimeout(playTrip, 200);
-      });
     }
 
-    function resetTrip() {
-      pauseTrip();
-      tripIndex = 0;
-      if (tripMarker) {
-        map.removeLayer(tripMarker);
-        tripMarker = null;
+    button.addEventListener("click", checkPassword);
+    input.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        checkPassword();
       }
-      if (tripLine) {
-        map.removeLayer(tripLine);
-        tripLine = null;
-      }
-      updateTimeline("");
-      updateProgressBar(0);
-      document.getElementById("playTripBtn").disabled = false;
-      document.getElementById("pauseTripBtn").disabled = true;
-      gallery.innerHTML = "";
-      photos.forEach((p) => {
-        const file = typeof p === "string" ? p : p.path;
-        const img = document.createElement("img");
-        img.src = file;
-        img.alt = "";
-        gallery.appendChild(img);
-      });
-      zoomToTripBounds();
-    }
+    });
+    input.focus();
   </script>
 </body>
 </html>
