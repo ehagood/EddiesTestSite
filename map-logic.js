@@ -27,7 +27,6 @@ function initializeMap() {
   let tripSpeed = 1500;
   let showPhotosOnTrip = true;
   let tripLine = null;
-
   let galleryVisible = true;
   const sound = document.getElementById("tripSound");
 
@@ -137,27 +136,54 @@ function initializeMap() {
     document.getElementById("timeline").textContent = dateStr ? `Date: ${dateStr}` : "";
   }
 
+  function animateMarker(startLatLng, endLatLng, duration, callback) {
+    let startTime = null;
+    function animate(time) {
+      if (!startTime) startTime = time;
+      let progress = Math.min((time - startTime) / duration, 1);
+      let currentLat = startLatLng.lat + (endLatLng.lat - startLatLng.lat) * progress;
+      let currentLng = startLatLng.lng + (endLatLng.lng - startLatLng.lng) * progress;
+      tripMarker.setLatLng([currentLat, currentLng]);
+      map.panTo([currentLat, currentLng]);
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        callback();
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
   function playTrip() {
     if (tripIndex === 0) drawTripLine();
     if (tripIndex >= tripPath.length) return resetTrip();
     const step = tripPath[tripIndex];
-    if (!tripMarker) tripMarker = L.marker(step.latLng, { icon: carIcon }).addTo(map);
-    else tripMarker.setLatLng(step.latLng);
-    map.panTo(step.latLng);
-    if (showPhotosOnTrip) {
-      tripMarker.bindPopup(`<img src="${step.file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;"><div>${step.caption}</div><div>${step.date.toISOString().slice(0,19).replace('T',' ')}</div>`);
+    if (!tripMarker) {
+      tripMarker = L.marker(step.latLng, { icon: carIcon }).addTo(map);
+      map.panTo(step.latLng);
       tripMarker.openPopup();
-    } else {
-      tripMarker.closePopup();
+      tripIndex++;
+      tripTimer = setTimeout(playTrip, tripSpeed);
+      return;
     }
-    updateTimeline(step.date.toISOString().slice(0,10));
-    document.getElementById("progressBar").style.width = `${((tripIndex + 1) / tripPath.length) * 100}%`;
-    if (sound) {
-      sound.currentTime = 0;
-      sound.play().catch(err => console.warn("Sound playback failed:", err));
-    }
-    tripIndex++;
-    tripTimer = setTimeout(playTrip, tripSpeed);
+    const start = tripMarker.getLatLng();
+    const end = step.latLng;
+    animateMarker(start, end, tripSpeed, () => {
+      if (showPhotosOnTrip) {
+        tripMarker.bindPopup(`<img src="${step.file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;"><div>${step.caption}</div><div>${step.date.toISOString().slice(0,19).replace('T',' ')}</div>`);
+        tripMarker.openPopup();
+      } else {
+        tripMarker.closePopup();
+      }
+      updateTimeline(step.date.toISOString().slice(0,10));
+      document.getElementById("progressBar").style.width = `${((tripIndex + 1) / tripPath.length) * 100}%`;
+      if (sound) {
+        sound.currentTime = 0;
+        sound.play().catch(err => console.warn("Sound playback failed:", err));
+      }
+      tripIndex++;
+      tripTimer = setTimeout(playTrip, tripSpeed);
+    });
   }
 
   function pauseTrip() {
