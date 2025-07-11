@@ -131,6 +131,7 @@ const popupHtml = `
   (useClustering ? clusterGroup : plainGroup).addLayer(marker);
 
   const parsedDate = new Date(datetime);
+    console.log("Raw datetime:", datetime, "Parsed:", parsedDate);
   if (!isNaN(parsedDate)) {
     tripPath.push({
       latLng: L.latLng(markerLat, markerLon),
