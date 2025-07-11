@@ -228,11 +228,14 @@ function initializeMap() {
     document.getElementById("pauseTripBtn").disabled = true;
   }
   
-   document.getElementById("yearFilter").addEventListener("change", function () {
-    const selectedYear = this.value;
-    loadMarkers(photos, selectedYear).then(() => {
-      this.value = selectedYear;
-    });
+  document.getElementById("yearFilter").addEventListener("change", function () {
+  const selectedYear = this.value;
+  loadMarkers(photos, selectedYear).then(() => {
+    // Explicitly set dropdown after load to ensure correct label
+    const yearSelect = document.getElementById("yearFilter");
+    yearSelect.value = selectedYear;
+  });
+});
   });
  
 
