@@ -88,7 +88,10 @@ function initializeMap() {
         lat == null || lon == null ||
         !isValidCoordinate(lat, lon) ||
         (lat === 0 && lon === 0)
-      ) continue;
+      ) {
+         console.warn("Skipping photo due to invalid coordinates:", { file, lat, lon });
+         continue;
+        }
 
       const year = datetime?.slice(0, 4);
       if (year) yearSet.add(year);
