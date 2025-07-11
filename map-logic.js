@@ -19,6 +19,12 @@ function initializeMap() {
     iconAnchor: [16, 16],
     className: "flipped-icon"
   });
+  const unknownIcon = L.icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/1828/1828774.png", // question mark icon
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  });
+
 
   let tripPath = [];
   let tripIndex = 0;
