@@ -138,8 +138,8 @@ const popupHtml = `
       file: file,
       caption: caption,
       dateStr: datetime
-      console.log("Added to trip:", file);
     });
+    console.log("Added to trip:", file);
   }
 
   if (galleryVisible) {
