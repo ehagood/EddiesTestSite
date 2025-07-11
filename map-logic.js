@@ -139,24 +139,6 @@ function initializeMap() {
   });
 }
 
-
-      Promise.all(loadPromises).then(() => {
-        tripPath.sort((a, b) => a.date - b.date);
-        if (bounds.length) map.fitBounds(bounds);
-        const yearSelect = document.getElementById("yearFilter");
-        yearSelect.innerHTML = '<option value="">All Years</option>';
-        Array.from(yearSet).sort().forEach((y) => {
-          const option = document.createElement("option");
-          option.value = y;
-          option.textContent = y;
-          yearSelect.appendChild(option);
-        });
-        map.addLayer(useClustering ? clusterGroup : plainGroup);
-        resolve();
-      });
-    });
-  }
-
   function cancelAnimation() {
     if (animationFrameId !== null) {
       cancelAnimationFrame(animationFrameId);
