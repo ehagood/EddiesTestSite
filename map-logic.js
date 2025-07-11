@@ -130,18 +130,22 @@ const popupHtml = `
   marker.bindPopup(popupHtml);
   (useClustering ? clusterGroup : plainGroup).addLayer(marker);
 
-  const parsedDate = new Date(datetime);
-    console.log("Raw datetime:", datetime, "Parsed:", parsedDate);
-  if (!isNaN(parsedDate)) {
-    tripPath.push({
-      latLng: L.latLng(markerLat, markerLon),
-      date: parsedDate,
-      file: file,
-      caption: caption,
-      dateStr: datetime
-    });
-    console.log("Added to trip:", file);
+  let parsedDate = null;
+  if (datetime) {
+    // Convert "2024:09:04 19:22:46" → "2024-09-04T19:22:46"
+    const cleaned = datetime.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3').replace(' ', 'T');
+    parsedDate = new Date(cleaned);
   }
+if (parsedDate && !isNaN(parsedDate)) {
+  tripPath.push({
+    latLng: L.latLng(markerLat, markerLon),
+    date: parsedDate,
+    file: file,
+    caption: caption,
+    dateStr: datetime
+  });
+  console.log("Added to trip:", file);
+}
 
   if (galleryVisible) {
     const gridImg = document.createElement("img");
