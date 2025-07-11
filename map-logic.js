@@ -72,55 +72,63 @@ function initializeMap() {
     gallery.innerHTML = "";
   }
 
-  function loadMarkers(photoFiles, filterYear = null) {
-  return new Promise((resolve) => {
-    clearMarkers();
-    yearSet.clear();
-    const bounds = [];
+  for (const photo of photoFiles) {
+  const { path: file, caption = "", lat, lon, datetime } = photo;
 
-    for (const photo of photoFiles) {
-      const { path: file, caption = "", lat, lon, datetime } = photo;
+  const year = datetime?.slice(0, 4);
+  if (year) yearSet.add(year);
 
-      // Skip if required data is missing or year doesn't match
-      if (filterYear && (!datetime || !datetime.startsWith(filterYear))) continue;
-      //if (lat == null || lon == null || !isValidCoordinate(lat, lon)) continue;
-      if (
-        lat == null || lon == null ||
-        !isValidCoordinate(lat, lon) ||
-        (lat === 0 && lon === 0)
-      ) {
-         console.warn("Skipping photo due to invalid coordinates:", { file, lat, lon });
-         continue;
-        }
+  let markerLat = lat;
+  let markerLon = lon;
+  let useUnknownIcon = false;
 
-      const year = datetime?.slice(0, 4);
-      if (year) yearSet.add(year);
+  // If invalid or missing coords, use fallback near Jacksonville
+  if (
+    lat == null || lon == null ||
+    !isValidCoordinate(lat, lon) ||
+    (lat === 0 && lon === 0)
+  ) {
+    markerLat = 30.3;
+    markerLon = -81.5;
+    useUnknownIcon = true;
+    console.warn("Missing or invalid coordinates:", { file, lat, lon });
+  } else if (filterYear && (!datetime || !datetime.startsWith(filterYear))) {
+    continue;
+  }
 
-      bounds.push([lat, lon]);
+  bounds.push([markerLat, markerLon]);
 
-      const marker = L.marker([lat, lon]);
-      const popupHtml = `<img src="${file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;"><div>${caption}</div>`;
-      marker.bindPopup(popupHtml);
-      (useClustering ? clusterGroup : plainGroup).addLayer(marker);
+  const marker = L.marker([markerLat, markerLon], {
+    icon: useUnknownIcon ? unknownIcon : undefined,
+  });
 
-      const parsedDate = new Date(datetime);
-      if (!isNaN(parsedDate)) {
-        tripPath.push({
-          latLng: L.latLng(lat, lon),
-          date: parsedDate,
-          file: file,
-          caption: caption,
-          dateStr: datetime
-        });
-      }
+  const popupHtml = `
+    <img src="${file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;">
+    <div>${caption}</div>
+    ${useUnknownIcon ? "<div style='color:red'><em>Location Unknown</em></div>" : ""}
+  `;
+  marker.bindPopup(popupHtml);
+  (useClustering ? clusterGroup : plainGroup).addLayer(marker);
 
-      if (galleryVisible) {
-        const gridImg = document.createElement("img");
-        gridImg.src = file;
-        gridImg.alt = caption;
-        gallery.appendChild(gridImg);
-      }
-    }
+  const parsedDate = new Date(datetime);
+  if (!isNaN(parsedDate)) {
+    tripPath.push({
+      latLng: L.latLng(markerLat, markerLon),
+      date: parsedDate,
+      file: file,
+      caption: caption,
+      dateStr: datetime
+    });
+  }
+
+  if (galleryVisible) {
+    const gridImg = document.createElement("img");
+    gridImg.src = file;
+    gridImg.alt = caption;
+    gallery.appendChild(gridImg);
+  }
+}
+
 
     tripPath.sort((a, b) => a.date - b.date);
     if (bounds.length) map.fitBounds(bounds);
