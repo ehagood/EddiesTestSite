@@ -24,6 +24,7 @@ function initializeMap() {
   let tripIndex = 0;
   let tripMarker = null;
   let tripTimer = null;
+  let animationFrameId = null;
   let tripSpeed = 1500;
   let showPhotosOnTrip = true;
   let tripLine = null;
@@ -59,6 +60,13 @@ function initializeMap() {
     document.getElementById("timeline").textContent = "";
     document.getElementById("progressBar").style.width = "0%";
     if (tripLine) map.removeLayer(tripLine);
+  }
+
+   function cancelAnimation() {
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
   }
 
   function loadMarkers(photoFiles, filterYear = null) {
@@ -128,7 +136,12 @@ function initializeMap() {
   function drawTripLine() {
     if (tripLine) map.removeLayer(tripLine);
     if (tripPath.length > 1) {
-      tripLine = L.polyline(tripPath.map(p => p.latLng), { color: "blue", weight: 3, opacity: 0.7, smoothFactor: 1 }).addTo(map);
+      tripLine = L.polyline(tripPath.map(p => p.latLng), {
+        color: "blue",
+        weight: 3,
+        opacity: 0.7,
+        smoothFactor: 1
+      }).addTo(map);
     }
   }
 
@@ -146,14 +159,15 @@ function initializeMap() {
       tripMarker.setLatLng([currentLat, currentLng]);
       map.panTo([currentLat, currentLng]);
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        animationFrameId = requestAnimationFrame(animate);
       } else {
+        animationFrameId = null;
         callback();
       }
     }
-    requestAnimationFrame(animate);
+    animationFrameId = requestAnimationFrame(animate);
   }
-
+  
   function playTrip() {
     if (tripIndex === 0) drawTripLine();
     if (tripIndex >= tripPath.length) return resetTrip();
@@ -188,20 +202,33 @@ function initializeMap() {
 
   function pauseTrip() {
     if (tripTimer) clearTimeout(tripTimer);
+    cancelAnimation();
     document.getElementById("playTripBtn").disabled = false;
-    document.getElementById("pauseTripBtn").disabled = true;
+    const pauseBtn = document.getElementById("pauseTripBtn");
+    pauseBtn.disabled = false;
+    pauseBtn.textContent = "Resume Trip";
+    pauseBtn.onclick = () => {
+      pauseBtn.textContent = "Pause Trip";
+      pauseBtn.onclick = pauseTrip;
+      document.getElementById("playTripBtn").disabled = true;
+      playTrip();
+    };
   }
 
   function resetTrip() {
     pauseTrip();
     tripIndex = 0;
     if (tripMarker) map.removeLayer(tripMarker);
+    tripMarker = null;
     if (tripLine) map.removeLayer(tripLine);
+    tripLine = null;
     updateTimeline("");
     document.getElementById("progressBar").style.width = "0%";
     document.getElementById("playTripBtn").disabled = false;
     document.getElementById("pauseTripBtn").disabled = true;
   }
+  
+  
 
   function toggleGallery() {
     galleryVisible = !galleryVisible;
