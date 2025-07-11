@@ -120,11 +120,13 @@ function initializeMap() {
   }
   const marker = L.marker([markerLat, markerLon], markerOptions);
 
-  const popupHtml = `
-    <img src="${file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;">
+const popupHtml = `
+  <div style="width: 220px; word-wrap: break-word;">
+    <img src="${file}" style="width: 100%; height: auto; display:block; margin-bottom:4px; border-radius:4px;">
     <div>${caption}</div>
     ${useUnknownIcon ? "<div style='color:red'><em>Location Unknown</em></div>" : ""}
-  `;
+  </div>
+`;
   marker.bindPopup(popupHtml);
   (useClustering ? clusterGroup : plainGroup).addLayer(marker);
 
