@@ -253,13 +253,13 @@ const allYearsCheckbox = document.getElementById("allYearsCheckbox");
 // Handle checkbox change
 allYearsCheckbox.addEventListener("change", function () {
   if (this.checked) {
-    // When checked, reset select to empty (All Years)
+    // When checked, reset year dropdown to 'All Years'
     yearFilter.value = "";
     loadMarkers(photos, null);
   } else {
-    // When unchecked, if no year selected, pick first available year
+    // When unchecked, keep the current year selection or pick first year if none selected
     if (!yearFilter.value && yearFilter.options.length > 1) {
-      yearFilter.value = yearFilter.options[1].value; // first year option
+      yearFilter.value = yearFilter.options[1].value; // first actual year option
     }
     loadMarkers(photos, yearFilter.value);
   }
@@ -268,11 +268,11 @@ allYearsCheckbox.addEventListener("change", function () {
 // Handle year select change
 yearFilter.addEventListener("change", function () {
   if (!allYearsCheckbox.checked) {
+    // Only load markers when filtering by a specific year
     loadMarkers(photos, this.value);
   }
 });
 
-  
 
   function toggleGallery() {
     galleryVisible = !galleryVisible;
