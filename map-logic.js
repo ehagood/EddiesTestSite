@@ -77,6 +77,11 @@ function initializeMap() {
     if (tripLine) map.removeLayer(tripLine);
     gallery.innerHTML = "";
   }
+  function loadMarkers(photoFiles, filterYear = null) {
+  return new Promise((resolve) => {
+    clearMarkers();
+    yearSet.clear();
+    const bounds = [];
 
   for (const photo of photoFiles) {
   const { path: file, caption = "", lat, lon, datetime } = photo;
