@@ -141,6 +141,9 @@ function initializeMap() {
   function pauseTrip() {
     if (tripTimer) clearTimeout(tripTimer);
     cancelAnimation();
+    if (sound) {
+      sound.pause();
+    }
     document.getElementById("playTripBtn").disabled = false;
     const pauseBtn = document.getElementById("pauseTripBtn");
     pauseBtn.disabled = false;
@@ -153,6 +156,17 @@ function initializeMap() {
     };
   }
 
+  function resumeTrip() {
+  if (sound) {
+    sound.play().catch(err => console.warn("Sound playback failed:", err));
+  }
+  const pauseBtn = document.getElementById("pauseTripBtn");
+  pauseBtn.textContent = "Pause Trip";
+  pauseBtn.onclick = pauseTrip;
+  document.getElementById("playTripBtn").disabled = true;
+  playTrip();
+}
+
   function resetTrip() {
     pauseTrip();
     tripIndex = 0;
@@ -164,6 +178,10 @@ function initializeMap() {
     document.getElementById("progressBar").style.width = "0%";
     document.getElementById("playTripBtn").disabled = false;
     document.getElementById("pauseTripBtn").disabled = true;
+    if (sound) {
+      sound.pause();
+      sound.currentTime = 0;
+    }
   }
 
   function loadMarkers(photoFiles, filterYear = null) {
