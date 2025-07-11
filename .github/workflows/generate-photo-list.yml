@@ -1,4 +1,4 @@
-name: Generate Photo List 
+name: Generate Photo List
 
 on:
   push:
@@ -13,19 +13,53 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Generate photos.json
+      - name: Install Tools
         run: |
-          find photos -type f \( -iname '*.jpg' -o -iname '*.jpeg' \) > photolist.txt
-          jq -R -s -c 'split("\n") | map(select(length > 0))' photolist.txt > photos.json
-          rm photolist.txt
+          sudo apt-get update
+          sudo apt-get install -y jq exiftool
+
+      - name: Generate photos.json with EXIF
+        run: |
+          echo "[" > photos.json
+          first=true
+          find photos -type f \( -iname '*.jpg' -o -iname '*.jpeg' \) | while read file; do
+            # Extract EXIF fields
+            gpslat=$(exiftool -GPSLatitude -n -s3 "$file")
+            gpslatref=$(exiftool -GPSLatitudeRef -s3 "$file")
+            gpslon=$(exiftool -GPSLongitude -n -s3 "$file")
+            gpslonref=$(exiftool -GPSLongitudeRef -s3 "$file")
+            datetime=$(exiftool -DateTimeOriginal -s3 "$file")
+
+            # Fix negative lat/lon based on ref
+            [[ "$gpslatref" == "S" ]] && gpslat="-${gpslat}"
+            [[ "$gpslonref" == "W" ]] && gpslon="-${gpslon}"
+
+            # Skip if GPS is not available
+            if [[ -z "$gpslat" || -z "$gpslon" ]]; then
+              continue
+            fi
+
+            # JSON entry
+            json=$(jq -n \
+              --arg path "$file" \
+              --arg lat "$gpslat" \
+              --arg lon "$gpslon" \
+              --arg datetime "$datetime" \
+              '{path: $path, lat: ($lat|tonumber), lon: ($lon|tonumber), datetime: $datetime}')
+
+            if $first; then
+              first=false
+              echo "$json" >> photos.json
+            else
+              echo ",$json" >> photos.json
+            fi
+          done
+          echo "]" >> photos.json
 
       - name: Commit changes
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add photos.json
-          git diff --cached --quiet || git commit -m "Update photos.json"
+          git diff --cached --quiet || git commit -m "Update photos.json with EXIF data"
           git push
