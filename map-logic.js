@@ -164,6 +164,83 @@ function initializeMap() {
     document.getElementById("pauseTripBtn").disabled = true;
   }
 
+  function loadMarkers(photoFiles, filterYear = null) {
+  return new Promise((resolve) => {
+    clearMarkers();           // clears tripPath, gallery, map markers, etc.
+    gallery.innerHTML = "";   // clear gallery container again just in case
+    yearSet.clear();
+    tripPath = [];            // ensure tripPath cleared here as well, to be safe
+    const bounds = [];
+
+    let loadPromises = photoFiles.map((entry) => {
+      return new Promise((res) => {
+        const file = typeof entry === "string" ? entry : entry.path;
+        const caption = typeof entry === "string" ? "" : entry.caption || "";
+        const img = new Image();
+        img.src = file;
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          EXIF.getData(img, function () {
+            const lat = EXIF.getTag(this, "GPSLatitude");
+            const lng = EXIF.getTag(this, "GPSLongitude");
+            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+            const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+            const dateStr = EXIF.getTag(this, "DateTimeOriginal");
+            const photoYear = formatExifYear(dateStr);
+            if (photoYear) yearSet.add(photoYear);
+            if (filterYear && photoYear !== filterYear) return res(); // skip photo outside filter
+
+            if (lat && lng && latRef && lngRef) {
+              const latitude = convertToDecimal(lat, latRef);
+              const longitude = convertToDecimal(lng, lngRef);
+              if (
+                latitude == null || longitude == null ||
+                latitude < -90 || latitude > 90 ||
+                longitude < -180 || longitude > 180
+              ) return res();
+
+              bounds.push([latitude, longitude]);
+
+              const marker = L.marker([latitude, longitude]);
+              const popupHtml = `<img src="${file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;"><div>${caption}</div>`;
+              (useClustering ? clusterGroup : plainGroup).addLayer(marker);
+
+              const parsedDate = parseExifDate(dateStr);
+              if (parsedDate) {
+                tripPath.push({ latLng: L.latLng(latitude, longitude), date: parsedDate, file: file, caption: caption, dateStr });
+              }
+
+              // Append photo once
+              const gridImg = document.createElement("img");
+              gridImg.src = file;
+              gridImg.alt = caption;
+              gallery.appendChild(gridImg);
+            }
+            res();
+          });
+        };
+        img.onerror = () => res();
+      });
+    });
+
+    Promise.all(loadPromises).then(() => {
+      tripPath.sort((a, b) => a.date - b.date);
+      if (bounds.length) map.fitBounds(bounds);
+      const yearSelect = document.getElementById("yearFilter");
+      yearSelect.innerHTML = '<option value="">All Years</option>';
+      Array.from(yearSet).sort().forEach((y) => {
+        const option = document.createElement("option");
+        option.value = y;
+        option.textContent = y;
+        yearSelect.appendChild(option);
+      });
+      map.addLayer(useClustering ? clusterGroup : plainGroup);
+      resolve();
+    });
+  });
+}
+
+
   const allYearsCheckbox = document.createElement("label");
   allYearsCheckbox.innerHTML = '<input type="checkbox" id="allYearsCheckbox" checked /> All Years';
   const yearFilter = document.getElementById("yearFilter");
