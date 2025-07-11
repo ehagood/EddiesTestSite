@@ -83,7 +83,12 @@ function initializeMap() {
 
       // Skip if required data is missing or year doesn't match
       if (filterYear && (!datetime || !datetime.startsWith(filterYear))) continue;
-      if (lat == null || lon == null || !isValidCoordinate(lat, lon)) continue;
+      //if (lat == null || lon == null || !isValidCoordinate(lat, lon)) continue;
+      if (
+        lat == null || lon == null ||
+        !isValidCoordinate(lat, lon) ||
+        (lat === 0 && lon === 0)
+      ) continue;
 
       const year = datetime?.slice(0, 4);
       if (year) yearSet.add(year);
