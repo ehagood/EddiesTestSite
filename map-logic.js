@@ -241,24 +241,38 @@ function initializeMap() {
 }
 
 
-  const allYearsCheckbox = document.createElement("label");
-  allYearsCheckbox.innerHTML = '<input type="checkbox" id="allYearsCheckbox" checked /> All Years';
-  const yearFilter = document.getElementById("yearFilter");
-  yearFilter.parentNode.insertBefore(allYearsCheckbox, yearFilter);
+// Create and insert the "All Years" checkbox label with input inside
+const allYearsLabel = document.createElement("label");
+allYearsLabel.innerHTML = '<input type="checkbox" id="allYearsCheckbox" checked /> All Years';
+const yearFilter = document.getElementById("yearFilter");
+yearFilter.parentNode.insertBefore(allYearsLabel, yearFilter);
 
-  document.getElementById("allYearsCheckbox").addEventListener("change", function () {
-    const selectedYear = this.checked ? null : yearFilter.value;
-    loadMarkers(photos, selectedYear);
-  });
+// Get the checkbox input itself
+const allYearsCheckbox = document.getElementById("allYearsCheckbox");
 
-  document.getElementById("yearFilter").addEventListener("change", function () {
-    const allYearsChecked = document.getElementById("allYearsCheckbox").checked;
-    const selectedYear = allYearsChecked ? null : this.value;
-    if (!allYearsChecked) {
-      loadMarkers(photos, this.Value);
-    }  
-  });
- 
+// Handle checkbox change
+allYearsCheckbox.addEventListener("change", function () {
+  if (this.checked) {
+    // When checked, reset select to empty (All Years)
+    yearFilter.value = "";
+    loadMarkers(photos, null);
+  } else {
+    // When unchecked, if no year selected, pick first available year
+    if (!yearFilter.value && yearFilter.options.length > 1) {
+      yearFilter.value = yearFilter.options[1].value; // first year option
+    }
+    loadMarkers(photos, yearFilter.value);
+  }
+});
+
+// Handle year select change
+yearFilter.addEventListener("change", function () {
+  if (!allYearsCheckbox.checked) {
+    loadMarkers(photos, this.value);
+  }
+});
+
+  
 
   function toggleGallery() {
     galleryVisible = !galleryVisible;
