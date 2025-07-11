@@ -229,19 +229,23 @@ function initializeMap() {
   }
   
   document.getElementById("yearFilter").addEventListener("change", function () {
-  const selectedYear = this.value;
-  loadMarkers(photos, selectedYear).then(() => {
-    const yearSelect = document.getElementById("yearFilter");
-    for (let i = 0; i < yearSelect.options.length; i++) {
-      if (yearSelect.options[i].value === selectedYear) {
-        yearSelect.selectedIndex = i;
-        break;
-      }
-    }
-  });
+  const allYearsChecked = document.getElementById("allYearsCheckbox").checked;
+  const selectedYear = allYearsChecked ? null : this.value;
+  loadMarkers(photos, selectedYear);
 });
-});
+
+
+  // Additional init logic can be added here...
+
+  const allYearsCheckbox = document.createElement("label");
+  allYearsCheckbox.innerHTML = '<input type="checkbox" id="allYearsCheckbox" checked /> All Years';
+  const yearFilter = document.getElementById("yearFilter");
+  yearFilter.parentNode.insertBefore(allYearsCheckbox, yearFilter);
+  document.getElementById("allYearsCheckbox").addEventListener("change", function () {
+    const selectedYear = this.checked ? null : yearFilter.value;
+    loadMarkers(photos, selectedYear);
   });
+
  
 
   function toggleGallery() {
