@@ -254,8 +254,11 @@ function initializeMap() {
   document.getElementById("yearFilter").addEventListener("change", function () {
     const allYearsChecked = document.getElementById("allYearsCheckbox").checked;
     const selectedYear = allYearsChecked ? null : this.value;
-    loadMarkers(photos, selectedYear);
+    if (!allYearsChecked) {
+      loadMarkers(photos, this.Value);
+    }  
   });
+ 
 
   function toggleGallery() {
     galleryVisible = !galleryVisible;
