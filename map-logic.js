@@ -219,6 +219,7 @@ const popupHtml = `
   }
 
   function playTrip() {
+    console.log("Trip path length:", tripPath.length);
     if (tripIndex === 0) {
       drawTripLine();
       playSoundOnce();  // Play music once when trip starts
