@@ -189,6 +189,10 @@ function initializeMap() {
       tripTimer = setTimeout(playTrip, tripSpeed);
       return;
     }
+    if (sound) {
+        sound.currentTime = 0;
+        sound.play().catch(err => console.warn("Sound playback failed:", err));
+      }
     const start = tripMarker.getLatLng();
     const end = step.latLng;
     animateMarker(start, end, tripSpeed, () => {
@@ -200,10 +204,6 @@ function initializeMap() {
       }
       updateTimeline(step.date.toISOString().slice(0,10));
       document.getElementById("progressBar").style.width = `${((tripIndex + 1) / tripPath.length) * 100}%`;
-      if (sound) {
-        sound.currentTime = 0;
-        sound.play().catch(err => console.warn("Sound playback failed:", err));
-      }
       tripIndex++;
       tripTimer = setTimeout(playTrip, tripSpeed);
     });
