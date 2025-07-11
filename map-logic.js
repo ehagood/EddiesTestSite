@@ -177,12 +177,21 @@ function initializeMap() {
     document.getElementById("timeline").textContent = dateStr ? `Date: ${dateStr}` : "";
   }
 
-  function playTrip() {
-    if (tripIndex === 0 && sound) {
+    
+  function playSoundOnce() {
+    if (sound) {
       sound.currentTime = 0;
       sound.play().catch(err => console.warn("Sound playback failed:", err));
+      isPlaying = true;
     }
-    if (tripIndex === 0) drawTripLine();
+  }
+
+  function playTrip() {
+    if (tripIndex === 0) {
+      drawTripLine();
+      playSoundOnce();  // Play music once when trip starts
+    }
+    //if (tripIndex === 0) drawTripLine();
     if (tripIndex >= tripPath.length) return resetTrip();
     const step = tripPath[tripIndex];
     if (!tripMarker) {
