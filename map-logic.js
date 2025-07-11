@@ -69,6 +69,15 @@ function initializeMap() {
     }
   }
 
+  function isValidCoordinate(lat, lng) {
+    return (
+      typeof lat === 'number' && typeof lng === 'number' &&
+      !isNaN(lat) && !isNaN(lng) &&
+      lat >= -90 && lat <= 90 &&
+      lng >= -180 && lng <= 180
+    );
+  }
+
   function animateMarker(startLatLng, endLatLng, duration, callback) {
     let startTime = null;
     function animate(time) {
@@ -226,13 +235,4 @@ function initializeMap() {
       document.getElementById("toggleGalleryBtn").addEventListener("click", toggleGallery);
     })
     .catch((error) => console.error("Error loading photos:", error));
-}
-
-function isValidCoordinate(lat, lng) {
-  return (
-    typeof lat === 'number' && typeof lng === 'number' &&
-    !isNaN(lat) && !isNaN(lng) &&
-    lat >= -90 && lat <= 90 &&
-    lng >= -180 && lng <= 180
-  );
 }
