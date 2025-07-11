@@ -114,9 +114,11 @@ function initializeMap() {
 
   bounds.push([markerLat, markerLon]);
 
-  const marker = L.marker([markerLat, markerLon], {
-    icon: useUnknownIcon ? unknownIcon : undefined,
-  });
+  const markerOptions = {};
+  if (useUnknownIcon) {
+    markerOptions.icon = unknownIcon;
+  }
+  const marker = L.marker([markerLat, markerLon], markerOptions);
 
   const popupHtml = `
     <img src="${file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;">
