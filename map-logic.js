@@ -3,6 +3,12 @@
 function initializeMap() {
   let map = L.map("map").setView([20, 0], 2);
 
+  const unknownIcon = L.icon({
+     iconUrl: "https://cdn-icons-png.flaticon.com/512/1828/1828774.png", // question mark icon
+     iconSize: [32, 32],
+     iconAnchor: [16, 32],
+  });
+  
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -18,11 +24,6 @@ function initializeMap() {
     iconSize: [32, 32],
     iconAnchor: [16, 16],
     className: "flipped-icon"
-  });
-  const unknownIcon = L.icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/1828/1828774.png", // question mark icon
-  iconSize: [32, 32],
-  iconAnchor: [16, 32],
   });
 
 
