@@ -178,6 +178,10 @@ function initializeMap() {
   }
 
   function playTrip() {
+    if (tripIndex === 0 && sound) {
+      sound.currentTime = 0;
+      sound.play().catch(err => console.warn("Sound playback failed:", err));
+    }
     if (tripIndex === 0) drawTripLine();
     if (tripIndex >= tripPath.length) return resetTrip();
     const step = tripPath[tripIndex];
@@ -189,10 +193,6 @@ function initializeMap() {
       tripTimer = setTimeout(playTrip, tripSpeed);
       return;
     }
-    if (sound) {
-        sound.currentTime = 0;
-        sound.play().catch(err => console.warn("Sound playback failed:", err));
-      }
     const start = tripMarker.getLatLng();
     const end = step.latLng;
     animateMarker(start, end, tripSpeed, () => {
@@ -209,6 +209,18 @@ function initializeMap() {
     });
   }
 
+function pauseAudio() {
+    if (sound && !sound.paused) {
+      sound.pause();
+    }
+  }
+
+  function resumeAudio() {
+    if (sound && sound.paused) {
+      sound.play().catch(err => console.warn("Sound playback failed:", err));
+    }
+  }
+
   function pauseTrip() {
     if (tripTimer) clearTimeout(tripTimer);
     cancelAnimation();
@@ -216,10 +228,12 @@ function initializeMap() {
     const pauseBtn = document.getElementById("pauseTripBtn");
     pauseBtn.disabled = false;
     pauseBtn.textContent = "Resume Trip";
+    pauseAudio();
     pauseBtn.onclick = () => {
       pauseBtn.textContent = "Pause Trip";
       pauseBtn.onclick = pauseTrip;
       document.getElementById("playTripBtn").disabled = true;
+      resumeAudio();
       playTrip();
     };
   }
