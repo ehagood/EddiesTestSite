@@ -86,6 +86,11 @@ function initializeMap() {
   for (const photo of photoFiles) {
   const { path: file, caption = "", lat, lon, datetime } = photo;
 
+  // Skip if photo doesn't match the selected year
+  if (filterYear && (!datetime || !datetime.startsWith(filterYear))) {
+    continue;
+  }
+
   const year = datetime?.slice(0, 4);
   if (year) yearSet.add(year);
 
@@ -103,8 +108,6 @@ function initializeMap() {
     markerLon = -81.5;
     useUnknownIcon = true;
     console.warn("Missing or invalid coordinates:", { file, lat, lon });
-  } else if (filterYear && (!datetime || !datetime.startsWith(filterYear))) {
-    continue;
   }
 
   bounds.push([markerLat, markerLon]);
