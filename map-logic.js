@@ -102,6 +102,7 @@ function initializeMap() {
 
   function updateTimeline(dateStr) {
     document.getElementById("timeline").textContent = dateStr ? `Date: ${dateStr}` : "";
+
   }
 
   function playTrip() {
@@ -125,7 +126,8 @@ function initializeMap() {
       } else {
         tripMarker.closePopup();
       }
-      updateTimeline(step.date.toISOString().slice(0,10));
+     //updateTimeline(step.date.toISOString().slice(0,10));
+      updateTimeline(step.date.toISOString().slice(0,19).replace('T', ' '));
       document.getElementById("progressBar").style.width = `${((tripIndex + 1) / tripPath.length) * 100}%`;
       if (sound) {
         sound.currentTime = 0;
