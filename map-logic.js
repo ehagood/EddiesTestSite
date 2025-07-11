@@ -228,7 +228,13 @@ function initializeMap() {
     document.getElementById("pauseTripBtn").disabled = true;
   }
   
-  
+   document.getElementById("yearFilter").addEventListener("change", function () {
+    const selectedYear = this.value;
+    loadMarkers(photos, selectedYear).then(() => {
+      this.value = selectedYear;
+    });
+  });
+ 
 
   function toggleGallery() {
     galleryVisible = !galleryVisible;
