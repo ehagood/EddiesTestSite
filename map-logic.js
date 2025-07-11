@@ -51,6 +51,15 @@ function initializeMap() {
     return dec;
   }
 
+  function isValidCoordinate(lat, lng) {
+    return (
+      typeof lat === 'number' && typeof lng === 'number' &&
+      !isNaN(lat) && !isNaN(lng) &&
+      lat >= -90 && lat <= 90 &&
+      lng >= -180 && lng <= 180
+    );
+  }
+
   function clearMarkers() {
     clusterGroup.clearLayers();
     plainGroup.clearLayers();
@@ -60,6 +69,68 @@ function initializeMap() {
     document.getElementById("timeline").textContent = "";
     document.getElementById("progressBar").style.width = "0%";
     if (tripLine) map.removeLayer(tripLine);
+    gallery.innerHTML = "";
+  }
+
+  function loadMarkers(photoFiles, filterYear = null) {
+    return new Promise((resolve) => {
+      clearMarkers();
+      yearSet.clear();
+      const bounds = [];
+
+      let loadPromises = photoFiles.map((entry) => {
+        return new Promise((res) => {
+          const file = typeof entry === "string" ? entry : entry.path;
+          const caption = typeof entry === "string" ? "" : entry.caption || "";
+          const img = new Image();
+          img.src = file;
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            EXIF.getData(img, function () {
+              const lat = EXIF.getTag(this, "GPSLatitude");
+              const lng = EXIF.getTag(this, "GPSLongitude");
+              const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+              const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+              const dateStr = EXIF.getTag(this, "DateTimeOriginal");
+              const photoYear = formatExifYear(dateStr);
+              if (photoYear) yearSet.add(photoYear);
+              if (filterYear && photoYear !== filterYear) return res();
+              const latitude = convertToDecimal(lat, latRef);
+              const longitude = convertToDecimal(lng, lngRef);
+              if (!isValidCoordinate(latitude, longitude)) return res();
+              bounds.push([latitude, longitude]);
+              const marker = L.marker([latitude, longitude]);
+              const popupHtml = `<img src="${file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;"><div>${caption}</div>`;
+              marker.bindPopup(popupHtml);
+              (useClustering ? clusterGroup : plainGroup).addLayer(marker);
+              const parsedDate = parseExifDate(dateStr);
+              if (parsedDate) tripPath.push({ latLng: L.latLng(latitude, longitude), date: parsedDate, file: file, caption: caption, dateStr });
+              const gridImg = document.createElement("img");
+              gridImg.src = file;
+              gridImg.alt = caption;
+              gallery.appendChild(gridImg);
+              res();
+            });
+          };
+          img.onerror = () => res();
+        });
+      });
+
+      Promise.all(loadPromises).then(() => {
+        tripPath.sort((a, b) => a.date - b.date);
+        if (bounds.length) map.fitBounds(bounds);
+        const yearSelect = document.getElementById("yearFilter");
+        yearSelect.innerHTML = '<option value="">All Years</option>';
+        Array.from(yearSet).sort().forEach((y) => {
+          const option = document.createElement("option");
+          option.value = y;
+          option.textContent = y;
+          yearSelect.appendChild(option);
+        });
+        map.addLayer(useClustering ? clusterGroup : plainGroup);
+        resolve();
+      });
+    });
   }
 
   function cancelAnimation() {
@@ -67,15 +138,6 @@ function initializeMap() {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
     }
-  }
-
-  function isValidCoordinate(lat, lng) {
-    return (
-      typeof lat === 'number' && typeof lng === 'number' &&
-      !isNaN(lat) && !isNaN(lng) &&
-      lat >= -90 && lat <= 90 &&
-      lng >= -180 && lng <= 180
-    );
   }
 
   function animateMarker(startLatLng, endLatLng, duration, callback) {
