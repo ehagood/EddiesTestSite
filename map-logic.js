@@ -28,7 +28,7 @@ function initializeMap() {
   let tripSpeed = 1500;
   let showPhotosOnTrip = true;
   let tripLine = null;
-  let galleryVisible = true;
+  let galleryVisible = false; // Turn gallery off by default
   const sound = document.getElementById("tripSound");
 
   function parseExifDate(dateStr) {
@@ -105,10 +105,12 @@ function initializeMap() {
               (useClustering ? clusterGroup : plainGroup).addLayer(marker);
               const parsedDate = parseExifDate(dateStr);
               if (parsedDate) tripPath.push({ latLng: L.latLng(latitude, longitude), date: parsedDate, file: file, caption: caption, dateStr });
-              const gridImg = document.createElement("img");
-              gridImg.src = file;
-              gridImg.alt = caption;
-              gallery.appendChild(gridImg);
+              if (galleryVisible) {
+                const gridImg = document.createElement("img");
+                gridImg.src = file;
+                gridImg.alt = caption;
+                gallery.appendChild(gridImg);
+              }
               res();
             });
           };
@@ -261,7 +263,8 @@ function initializeMap() {
     map.invalidateSize();
   }
 
-  document.getElementById("map").style.height = "calc(100% - 250px)";
+  document.getElementById("galleryContainer").classList.add("hidden");
+  document.getElementById("map").style.height = "100%";
 
   let photos = [];
   fetch("photos.json")
