@@ -251,7 +251,14 @@ function playSoundOnce() {
     const end = step.latLng;
     animateMarker(start, end, tripSpeed, () => {
       if (showPhotosOnTrip) {
-        tripMarker.bindPopup(`<img src="${step.file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;"><div>${step.caption}</div><div>${step.date.toISOString().slice(0,19).replace('T',' ')}</div>`);
+        //tripMarker.bindPopup(`<img src="${step.file}" style="max-width: 200px; max-height: 150px; display:block; margin-bottom:4px;"><div>${step.caption}</div><div>${step.date.toISOString().slice(0,19).replace('T',' ')}</div>`);
+        tripMarker.bindPopup(`
+           <div style="width: 220px; word-wrap: break-word;">
+           <img src="${step.file}" style="width: 100%; height: auto; display:block; margin-bottom:4px; border-radius:4px;">
+           <div>${step.caption}</div>
+           <div>${step.date.toISOString().slice(0,19).replace('T',' ')}</div>
+           </div>
+           `);
         tripMarker.openPopup();
       } else {
         tripMarker.closePopup();
