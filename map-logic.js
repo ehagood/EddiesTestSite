@@ -79,6 +79,7 @@ function initializeMap() {
     if (tripLine) map.removeLayer(tripLine);
     gallery.innerHTML = "";
   }
+     
   function loadMarkers(photoFiles, filterYear = null) {
   return new Promise((resolve) => {
     clearMarkers();
@@ -138,6 +139,7 @@ const popupHtml = `
       file: file,
       caption: caption,
       dateStr: datetime
+      console.log("Added to trip:", file);
     });
   }
 
@@ -165,6 +167,8 @@ const popupHtml = `
     map.addLayer(useClustering ? clusterGroup : plainGroup);
     resolve();
   });
+  console.log("Total photos:", photoFiles.length);
+  console.log("Trip path built with", tripPath.length, "entries");
 }
 
   function cancelAnimation() {
@@ -210,13 +214,17 @@ const popupHtml = `
   }
 
     
-  function playSoundOnce() {
-    if (sound) {
-      sound.currentTime = 0;
-      sound.play().catch(err => console.warn("Sound playback failed:", err));
-      isPlaying = true;
-    }
+  let soundPlayed = false;
+
+function playSoundOnce() {
+  if (!soundPlayed && sound) {
+    soundPlayed = true;
+    sound.currentTime = 0;
+    sound.play().catch(err => {
+      console.warn("Sound playback failed:", err);
+    });
   }
+}
 
   function playTrip() {
     console.log("Trip path length:", tripPath.length);
