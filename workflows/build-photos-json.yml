@@ -3,7 +3,7 @@ name: Build Photo JSON by Trip
 on:
   push:
     paths:
-      - 'photos/**.jpg'
+      - 'photos/**.j*'
       - '.github/workflows/build-photos-json.yml'
   workflow_dispatch:
 
@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: npm install exifr
 
-      - name: Generate photos.json
+      - name: Generate photos-grouped.json
         run: |
           node <<'EOF'
           const fs = require('fs');
@@ -67,8 +67,8 @@ jobs:
             walkDir(root, p => allPaths.push(p));
             for (const p of allPaths) await new Promise(r => setTimeout(r, 5));
 
-            fs.writeFileSync('photos.json', JSON.stringify(trips, null, 2));
-            console.log('✅ photos.json generated!');
+            fs.writeFileSync('photos-grouped.json', JSON.stringify(trips, null, 2));
+            console.log('✅ photos-grouped.json generated!');
           })();
           EOF
 
