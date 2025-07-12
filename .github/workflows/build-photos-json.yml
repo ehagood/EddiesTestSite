@@ -1,0 +1,81 @@
+name: Build Photo JSON by Trip
+
+on:
+  push:
+    paths:
+      - 'photos/**.j*'
+      - '.github/workflows/build-photos-json.yml'
+  workflow_dispatch:
+
+jobs:
+  generate-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install exifr
+
+      - name: Generate photos-grouped.json
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const exifr = require('exifr');
+
+          const root = 'photos';
+          const trips = {};
+
+          function walkDir(dir, callback) {
+            fs.readdirSync(dir).forEach(f => {
+              const fullPath = path.join(dir, f);
+              if (fs.statSync(fullPath).isDirectory()) {
+                walkDir(fullPath, callback);
+              } else if (/\.(jpe?g)$/i.test(f)) {
+                callback(fullPath);
+              }
+            });
+          }
+
+          walkDir(root, async (filePath) => {
+            const relPath = filePath.replace(/^photos\//, '').replace(/\\/g, '/');
+            const tripName = relPath.split('/')[0];
+            if (!trips[tripName]) trips[tripName] = [];
+
+            const metadata = await exifr.parse(filePath, { gps: true, tiff: true });
+            const entry = {
+              path: `photos/${relPath}`,
+              caption: '',
+              lat: metadata?.latitude ?? null,
+              lon: metadata?.longitude ?? null,
+              datetime: metadata?.DateTimeOriginal?.toISOString?.().replace('T', ' ').slice(0, 19) ?? null,
+            };
+
+            trips[tripName].push(entry);
+          });
+
+          (async () => {
+            // Wait until all entries are processed
+            const allPaths = [];
+            walkDir(root, p => allPaths.push(p));
+            for (const p of allPaths) await new Promise(r => setTimeout(r, 5));
+
+            fs.writeFileSync('photos-grouped.json', JSON.stringify(trips, null, 2));
+            console.log('✅ photos-grouped.json generated!');
+          })();
+          EOF
+
+      - name: Commit photos.json
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add photos.json
+          git commit -m "Update photos.json grouped by trip" || echo "No changes to commit"
+          git push
