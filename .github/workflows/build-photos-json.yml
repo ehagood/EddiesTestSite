@@ -20,10 +20,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install exifr
         run: npm install exifr
 
-      - name: Generate photos-grouped.json
+      - name: Generate photos.json grouped by trip
         run: |
           node <<'EOF'
           const fs = require('fs');
@@ -33,46 +33,49 @@ jobs:
           const root = 'photos';
           const trips = {};
 
-          function walkDir(dir, callback) {
-            fs.readdirSync(dir).forEach(f => {
+          function walkDir(dir) {
+            let files = [];
+            for (const f of fs.readdirSync(dir)) {
               const fullPath = path.join(dir, f);
               if (fs.statSync(fullPath).isDirectory()) {
-                walkDir(fullPath, callback);
+                files = files.concat(walkDir(fullPath));
               } else if (/\.(jpe?g)$/i.test(f)) {
-                callback(fullPath);
+                files.push(fullPath);
               }
-            });
+            }
+            return files;
           }
 
-          walkDir(root, async (filePath) => {
-            const relPath = filePath.replace(/^photos\//, '').replace(/\\/g, '/');
-            const tripName = relPath.split('/')[0];
-            if (!trips[tripName]) trips[tripName] = [];
+          async function generate() {
+            const files = walkDir(root);
+            for (const filePath of files) {
+              const relPath = filePath.replace(/^photos[\\/]/, '').replace(/\\/g, '/');
+              const tripName = relPath.split('/')[0];
+              if (!trips[tripName]) trips[tripName] = [];
 
-            const metadata = await exifr.parse(filePath, { gps: true, tiff: true });
-            const entry = {
-              path: `photos/${relPath}`,
-              caption: '',
-              lat: metadata?.latitude ?? null,
-              lon: metadata?.longitude ?? null,
-              datetime: metadata?.DateTimeOriginal?.toISOString?.().replace('T', ' ').slice(0, 19) ?? null,
-            };
+              try {
+                const metadata = await exifr.parse(filePath, { gps: true, tiff: true });
+                const entry = {
+                  path: `photos/${relPath}`,
+                  caption: '',
+                  lat: metadata?.latitude ?? null,
+                  lon: metadata?.longitude ?? null,
+                  datetime: metadata?.DateTimeOriginal?.toISOString?.().replace('T', ' ').slice(0, 19) ?? null,
+                };
+                trips[tripName].push(entry);
+              } catch (err) {
+                console.warn(`Error parsing ${filePath}:`, err.message);
+              }
+            }
 
-            trips[tripName].push(entry);
-          });
+            fs.writeFileSync('photos.json', JSON.stringify(trips, null, 2));
+            console.log('✅ photos.json generated!');
+          }
 
-          (async () => {
-            // Wait until all entries are processed
-            const allPaths = [];
-            walkDir(root, p => allPaths.push(p));
-            for (const p of allPaths) await new Promise(r => setTimeout(r, 5));
-
-            fs.writeFileSync('photos-grouped.json', JSON.stringify(trips, null, 2));
-            console.log('✅ photos-grouped.json generated!');
-          })();
+          generate();
           EOF
 
-      - name: Commit photos.json
+      - name: Commit updated photos.json
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
