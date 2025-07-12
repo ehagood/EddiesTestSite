@@ -42,17 +42,19 @@ function initializeMap() {
   const toggleBtn = document.getElementById("toggleGalleryBtn");
   if (toggleBtn) {
     toggleBtn.textContent = "Show Gallery";
-    toggleBtn.onclick = function () {
-      galleryVisible = !galleryVisible;
-      if (galleryVisible) {
-        gallery.classList.remove("hidden");
-        toggleBtn.textContent = "Hide Gallery";
-      } else {
-        gallery.classList.add("hidden");
-        toggleBtn.textContent = "Show Gallery";
-      }
-    };
+  toggleBtn.onclick = function () {
+  galleryVisible = !galleryVisible;
+  if (galleryVisible) {
+    gallery.innerHTML = ""; // Clear any existing images
+    loadMarkers(photos, document.getElementById("allYearsCheckbox").checked ? null : document.getElementById("yearFilter").value);
+    gallery.classList.remove("hidden");
+    toggleBtn.textContent = "Hide Gallery";
+  } else {
+    gallery.classList.add("hidden");
+    toggleBtn.textContent = "Show Gallery";
   }
+};
+
 
   function parseExifDate(dateStr) {
     if (!dateStr) return null;
