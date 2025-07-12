@@ -1,6 +1,60 @@
 // map-logic.js
 
-function loadMarkers(photoFiles, filterYear = null) {
+
+function initializeMap() {
+  map = L.map("map").setView([20, 0], 2);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+
+  clusterGroup = L.markerClusterGroup();
+  plainGroup = L.layerGroup();
+  useClustering = true;
+  gallery = document.getElementById("galleryContainer");
+  yearSet = new Set();
+  const carIcon = L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/744/744465.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    className: "flipped-icon"
+  });
+
+  tripPath = [];
+  tripIndex = 0;
+  tripMarker = null;
+  tripTimer = null;
+  animationFrameId = null;
+  tripSpeed = 1500;
+  showPhotosOnTrip = true;
+  tripLine = null;
+  galleryVisible = false;
+  const sound = document.getElementById("tripSound");
+
+  gallery.classList.add("hidden");
+  const toggleBtn = document.getElementById("toggleGalleryBtn");
+  if (toggleBtn) {
+    toggleBtn.textContent = "Show Gallery";
+    toggleBtn.onclick = function () {
+      galleryVisible = !galleryVisible;
+      if (galleryVisible) {
+        gallery.classList.remove("hidden");
+        toggleBtn.textContent = "Hide Gallery";
+      } else {
+        gallery.classList.add("hidden");
+        toggleBtn.textContent = "Show Gallery";
+      }
+    };
+  }
+
+  function pauseAudio() {
+    if (sound && !sound.paused) {
+      sound.pause();
+    }
+  }
+
+  function loadMarkers(photoFiles, filterYear = null) {
   return new Promise((resolve) => {
     clearMarkers();
     yearSet.clear();
@@ -63,59 +117,6 @@ function loadMarkers(photoFiles, filterYear = null) {
     });
   });
 }
-
-function initializeMap() {
-  map = L.map("map").setView([20, 0], 2);
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(map);
-
-  clusterGroup = L.markerClusterGroup();
-  plainGroup = L.layerGroup();
-  useClustering = true;
-  gallery = document.getElementById("galleryContainer");
-  yearSet = new Set();
-  const carIcon = L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/744/744465.png",
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    className: "flipped-icon"
-  });
-
-  tripPath = [];
-  tripIndex = 0;
-  tripMarker = null;
-  tripTimer = null;
-  animationFrameId = null;
-  tripSpeed = 1500;
-  showPhotosOnTrip = true;
-  tripLine = null;
-  galleryVisible = false;
-  const sound = document.getElementById("tripSound");
-
-  gallery.classList.add("hidden");
-  const toggleBtn = document.getElementById("toggleGalleryBtn");
-  if (toggleBtn) {
-    toggleBtn.textContent = "Show Gallery";
-    toggleBtn.onclick = function () {
-      galleryVisible = !galleryVisible;
-      if (galleryVisible) {
-        gallery.classList.remove("hidden");
-        toggleBtn.textContent = "Hide Gallery";
-      } else {
-        gallery.classList.add("hidden");
-        toggleBtn.textContent = "Show Gallery";
-      }
-    };
-  }
-
-  function pauseAudio() {
-    if (sound && !sound.paused) {
-      sound.pause();
-    }
-  }
 
   function resumeAudio() {
     if (sound && sound.paused) {
