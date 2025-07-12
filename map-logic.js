@@ -38,6 +38,22 @@ function initializeMap() {
   let galleryVisible = false; // Turn gallery off by default
   const sound = document.getElementById("tripSound");
 
+  gallery.classList.add("hidden");
+  const toggleBtn = document.getElementById("toggleGalleryBtn");
+  if (toggleBtn) {
+    toggleBtn.textContent = "Show Gallery";
+    toggleBtn.onclick = function () {
+      galleryVisible = !galleryVisible;
+      if (galleryVisible) {
+        gallery.classList.remove("hidden");
+        toggleBtn.textContent = "Hide Gallery";
+      } else {
+        gallery.classList.add("hidden");
+        toggleBtn.textContent = "Show Gallery";
+      }
+    };
+  }
+
   function parseExifDate(dateStr) {
     if (!dateStr) return null;
     const parts = dateStr.split(" ");
