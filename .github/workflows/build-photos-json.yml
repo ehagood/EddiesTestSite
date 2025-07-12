@@ -3,7 +3,7 @@ name: Build Photo JSON by Trip
 on:
   push:
     paths:
-      - 'photos/**.j*'
+      - 'photos/**/*.j*'
       - '.github/workflows/build-photos-json.yml'
   workflow_dispatch:
 
