@@ -1,83 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Van Gogh Gallery</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; background: #f8f8f8; }
-    img { max-width: 80%; max-height: 60vh; margin-top: 10px; }
-    #metadata { margin-top: 10px; font-size: 1.2em; }
-    #controls { margin-top: 15px; }
-  </style>
-</head>
-<body>
-  <h1>Van Gogh Gallery</h1>
-  <div id="controls">
-    <select id="category">
-      <option value="all">All</option>
-      <option value="Sunflowers">Sunflowers</option>
-      <option value="Self‑Portrait">Self‑Portrait</option>
-      <option value="Cypresses">Cypresses</option>
-    </select>
-    <button id="playMusic">Play Music 🎵</button>
-  </div>
-  <div>
-    <img id="painting" src="" alt="Loading paintings..."/>
-    <div id="metadata"></div>
-  </div>
-
-  <!-- Background Music -->
-  <audio id="bgMusic" loop>
-    <source src="https://upload.wikimedia.org/wikipedia/commons/1/19/J.S._Bach_-_Brandenburg_Concerto_No._3_in_G_major%2C_BWV_1048_-_I._Allegro.ogg" type="audio/ogg">
-    Your browser does not support the audio tag.
-  </audio>
-
 <script>
 const apiBase = 'https://collectionapi.metmuseum.org/public/collection/v1';
 let artworks = [], index = 0;
 
+// Known-good Van Gogh object IDs (public domain & CORS-friendly)
+const vanGoghIDs = [
+  436532, // "Wheat Field with Cypresses"
+  436535, // "Self-Portrait with a Straw Hat"
+  436529, // "Irises"
+  436528, // "The Olive Trees"
+  437984, // "Sunflowers"
+  436536, // "Self-Portrait"
+];
+
 async function loadArtworks() {
-  try {
-    const searchRes = await fetch(`${apiBase}/search?artistOrCulture=true&q=Vincent%20van%20Gogh`);
-    const searchData = await searchRes.json();
-
-    if (!searchData.objectIDs || !searchData.objectIDs.length) {
-      document.getElementById('metadata').innerText = 'No artworks found!';
-      return;
-    }
-
-    const ids = searchData.objectIDs.slice(0, 50); // limit for demo
-    const results = [];
-
-    for (const id of ids) {
-      try {
-        const res = await fetch(`${apiBase}/objects/${id}`);
-        if (!res.ok) continue; // skip if 404
-        const obj = await res.json();
-        if (obj.isPublicDomain && obj.primaryImageSmall) {
-          results.push({
-            title: obj.title,
-            date: obj.objectDate,
-            medium: obj.medium,
-            image: obj.primaryImageSmall
-          });
-        }
-      } catch (err) {
-        console.warn(`Skipping object ID ${id}:`, err);
+  const results = [];
+  for (const id of vanGoghIDs) {
+    try {
+      const res = await fetch(`${apiBase}/objects/${id}`);
+      if (!res.ok) continue; // skip 404/403
+      const obj = await res.json();
+      if (obj.isPublicDomain && obj.primaryImageSmall) {
+        results.push({
+          title: obj.title,
+          date: obj.objectDate,
+          medium: obj.medium,
+          image: obj.primaryImageSmall
+        });
       }
+    } catch (err) {
+      console.warn(`Skipping ID ${id}:`, err);
     }
-
-    if (!results.length) {
-      document.getElementById('metadata').innerText = 'No valid images found!';
-      return;
-    }
-
-    artworks = results;
-    cycle();
-  } catch (err) {
-    console.error(err);
-    document.getElementById('metadata').innerText = 'Error loading artworks!';
   }
+  artworks = results;
+  cycle();
 }
 
 function cycle() {
@@ -111,5 +66,3 @@ document.getElementById('category').addEventListener('change', () => {
 
 loadArtworks();
 </script>
-</body>
-</html>
