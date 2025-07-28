@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Van Gogh Gallery</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f8f8f8; }
+    img { max-width: 80%; max-height: 60vh; margin-top: 10px; }
+    #metadata { margin-top: 10px; font-size: 1.2em; }
+    #controls { margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <h1>Van Gogh Gallery</h1>
+  <div id="controls">
+    <select id="category">
+      <option value="all">All</option>
+      <option value="Sunflowers">Sunflowers</option>
+      <option value="Self‑Portrait">Self‑Portrait</option>
+      <option value="Cypresses">Cypresses</option>
+    </select>
+    <button id="playMusic">Play Music 🎵</button>
+  </div>
+  <div>
+    <img id="painting" src="" alt="Loading paintings..."/>
+    <div id="metadata"></div>
+  </div>
+
+  <!-- Audio element for music -->
+  <audio id="bgMusic" loop>
+    <source src="https://upload.wikimedia.org/wikipedia/commons/1/19/J.S._Bach_-_Brandenburg_Concerto_No._3_in_G_major%2C_BWV_1048_-_I._Allegro.ogg" type="audio/ogg">
+    Your browser does not support the audio tag.
+  </audio>
+
+<script>
+const apiBase = 'https://collectionapi.metmuseum.org/public/collection/v1';
+let artworks = [], index = 0;
+
+// Load Van Gogh artworks from The Met API
+async function loadArtworks() {
+  const res = await fetch(apiBase + '/search?artistOrCulture=true&q=Vincent%20van%20Gogh');
+  const data = await res.json();
+  const ids = data.objectIDs.slice(0, 100); // limit for demo
+
+  const all = [];
+  for (let id of ids) {
+    const r = await fetch(apiBase + '/objects/' + id);
+    const o = await r.json();
+    if (o.isPublicDomain && o.primaryImageSmall) {
+      all.push({
+        title: o.title,
+        date: o.objectDate,
+        medium: o.medium,
+        image: o.primaryImageSmall
+      });
+    }
+  }
+  artworks = all;
+  cycle();
+}
+
+// Cycle through images every 5s
+function cycle() {
+  if (!artworks.length) return;
+  const cat = document.getElementById('category').value;
+  let filtered = (cat === 'all') ? artworks : artworks.filter(a => a.title.includes(cat));
+  if (!filtered.length) filtered = artworks;
+
+  const art = filtered[index % filtered.length];
+  document.getElementById('painting').src = art.image;
+  document.getElementById('metadata').innerHTML =
+    `<strong>${art.title}</strong> (${art.date})<br>${art.medium}`;
+  index++;
+  setTimeout(cycle, 5000);
+}
+
+// Music playback handler
+document.getElementById('playMusic').addEventListener('click', () => {
+  const music = document.getElementById('bgMusic');
+  if (music.paused) {
+    music.play();
+    document.getElementById('playMusic').textContent = 'Pause Music ⏸';
+  } else {
+    music.pause();
+    document.getElementById('playMusic').textContent = 'Play Music 🎵';
+  }
+});
+
+// Category change resets slideshow
+document.getElementById('category').addEventListener('change', () => {
+  index = 0;
+});
+
+loadArtworks();
+</script>
+</body>
+</html>
