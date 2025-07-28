@@ -36,27 +36,38 @@
 const apiBase = 'https://collectionapi.metmuseum.org/public/collection/v1';
 let artworks = [], index = 0;
 
-// Load Van Gogh artworks from The Met API
+// Fetch Van Gogh artworks
 async function loadArtworks() {
-  const res = await fetch(apiBase + '/search?artistOrCulture=true&q=Vincent%20van%20Gogh');
-  const data = await res.json();
-  const ids = data.objectIDs.slice(0, 100); // limit for demo
+  try {
+    const searchRes = await fetch(`${apiBase}/search?artistOrCulture=true&q=Vincent%20van%20Gogh`);
+    const searchData = await searchRes.json();
 
-  const all = [];
-  for (let id of ids) {
-    const r = await fetch(apiBase + '/objects/' + id);
-    const o = await r.json();
-    if (o.isPublicDomain && o.primaryImageSmall) {
-      all.push({
-        title: o.title,
-        date: o.objectDate,
-        medium: o.medium,
-        image: o.primaryImageSmall
-      });
+    if (!searchData.objectIDs || !searchData.objectIDs.length) {
+      document.getElementById('metadata').innerText = 'No artworks found!';
+      return;
     }
+
+    const ids = searchData.objectIDs.slice(0, 50); // limit for demo
+    const results = [];
+
+    for (const id of ids) {
+      const res = await fetch(`${apiBase}/objects/${id}`);
+      const obj = await res.json();
+      if (obj.isPublicDomain && obj.primaryImageSmall) {
+        results.push({
+          title: obj.title,
+          date: obj.objectDate,
+          medium: obj.medium,
+          image: obj.primaryImageSmall
+        });
+      }
+    }
+    artworks = results;
+    cycle();
+  } catch (err) {
+    console.error(err);
+    document.getElementById('metadata').innerText = 'Error loading artworks!';
   }
-  artworks = all;
-  cycle();
 }
 
 // Cycle through images every 5s
@@ -86,7 +97,7 @@ document.getElementById('playMusic').addEventListener('click', () => {
   }
 });
 
-// Category change resets slideshow
+// Reset slideshow when category changes
 document.getElementById('category').addEventListener('change', () => {
   index = 0;
 });
