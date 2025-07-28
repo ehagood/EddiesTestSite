@@ -26,7 +26,7 @@
     <div id="metadata"></div>
   </div>
 
-  <!-- Audio element for music -->
+  <!-- Background Music -->
   <audio id="bgMusic" loop>
     <source src="https://upload.wikimedia.org/wikipedia/commons/1/19/J.S._Bach_-_Brandenburg_Concerto_No._3_in_G_major%2C_BWV_1048_-_I._Allegro.ogg" type="audio/ogg">
     Your browser does not support the audio tag.
@@ -36,7 +36,6 @@
 const apiBase = 'https://collectionapi.metmuseum.org/public/collection/v1';
 let artworks = [], index = 0;
 
-// Fetch Van Gogh artworks
 async function loadArtworks() {
   try {
     const searchRes = await fetch(`${apiBase}/search?artistOrCulture=true&q=Vincent%20van%20Gogh`);
@@ -51,17 +50,28 @@ async function loadArtworks() {
     const results = [];
 
     for (const id of ids) {
-      const res = await fetch(`${apiBase}/objects/${id}`);
-      const obj = await res.json();
-      if (obj.isPublicDomain && obj.primaryImageSmall) {
-        results.push({
-          title: obj.title,
-          date: obj.objectDate,
-          medium: obj.medium,
-          image: obj.primaryImageSmall
-        });
+      try {
+        const res = await fetch(`${apiBase}/objects/${id}`);
+        if (!res.ok) continue; // skip if 404
+        const obj = await res.json();
+        if (obj.isPublicDomain && obj.primaryImageSmall) {
+          results.push({
+            title: obj.title,
+            date: obj.objectDate,
+            medium: obj.medium,
+            image: obj.primaryImageSmall
+          });
+        }
+      } catch (err) {
+        console.warn(`Skipping object ID ${id}:`, err);
       }
     }
+
+    if (!results.length) {
+      document.getElementById('metadata').innerText = 'No valid images found!';
+      return;
+    }
+
     artworks = results;
     cycle();
   } catch (err) {
@@ -70,7 +80,6 @@ async function loadArtworks() {
   }
 }
 
-// Cycle through images every 5s
 function cycle() {
   if (!artworks.length) return;
   const cat = document.getElementById('category').value;
@@ -85,7 +94,6 @@ function cycle() {
   setTimeout(cycle, 5000);
 }
 
-// Music playback handler
 document.getElementById('playMusic').addEventListener('click', () => {
   const music = document.getElementById('bgMusic');
   if (music.paused) {
@@ -97,7 +105,6 @@ document.getElementById('playMusic').addEventListener('click', () => {
   }
 });
 
-// Reset slideshow when category changes
 document.getElementById('category').addEventListener('change', () => {
   index = 0;
 });
