@@ -1,68 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Van Gogh Gallery</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f8f8f8; margin: 0; padding: 20px; }
+    h1 { margin-bottom: 10px; }
+    img { max-width: 80%; max-height: 60vh; margin-top: 10px; border: 2px solid #ccc; }
+    #metadata { margin-top: 10px; font-size: 1.2em; }
+    #controls { margin-top: 15px; }
+    select, button { font-size: 1em; margin: 5px; padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h1>Van Gogh Gallery</h1>
+  <div id="controls">
+    <select id="category">
+      <option value="all">All</option>
+      <option value="Sunflowers">Sunflowers</option>
+      <option value="Self‑Portrait">Self‑Portrait</option>
+      <option value="Cypresses">Cypresses</option>
+    </select>
+    <button id="playMusic">Play Music 🎵</button>
+  </div>
+  <div>
+    <img id="painting" src="" alt="Loading paintings..."/>
+    <div id="metadata">Loading paintings...</div>
+  </div>
+
+  <!-- Background Music -->
+  <audio id="bgMusic" loop>
+    <source src="https://upload.wikimedia.org/wikipedia/commons/1/19/J.S._Bach_-_Brandenburg_Concerto_No._3_in_G_major%2C_BWV_1048_-_I._Allegro.ogg" type="audio/ogg">
+    Your browser does not support the audio tag.
+  </audio>
+
 <script>
-const apiBase = 'https://collectionapi.metmuseum.org/public/collection/v1';
-let artworks = [], index = 0;
+document.addEventListener('DOMContentLoaded', () => {
+  const apiBase = 'https://collectionapi.metmuseum.org/public/collection/v1';
+  let artworks = [], index = 0;
 
-// Known-good Van Gogh object IDs (public domain & CORS-friendly)
-const vanGoghIDs = [
-  436532, // "Wheat Field with Cypresses"
-  436535, // "Self-Portrait with a Straw Hat"
-  436529, // "Irises"
-  436528, // "The Olive Trees"
-  437984, // "Sunflowers"
-  436536, // "Self-Portrait"
-];
+  // ✅ Known-good Van Gogh IDs (public domain & CORS safe)
+  const vanGoghIDs = [
+    436532, // Self-Portrait with a Straw Hat
+    436524, // Sunflowers
+    436529, // Irises
+    436534, // Roses
+    436530, // Oleanders
+    436527, // Flowering Orchard
+    436526, // First Steps, after Millet
+    437984, // Sunflowers (duplicate theme)
+    437980, // Cypresses
+    437984, // Sunflowers variant
+    436528, // Olive Trees
+    436531, // Peasant Woman Cooking
+    436533, // Two Cut Sunflowers
+    336327, // Corridor in the Asylum
+    335327, // Sheaves of Wheat
+    437132, // Wheat Field with Cypresses
+    438817, // La Berceuse (Woman Rocking a Cradle)
+    437984, // Sunflowers
+    336421, // The Road Menders
+    336420  // Mountains at Saint-Rémy
+  ];
 
-async function loadArtworks() {
-  const results = [];
-  for (const id of vanGoghIDs) {
-    try {
-      const res = await fetch(`${apiBase}/objects/${id}`);
-      if (!res.ok) continue; // skip 404/403
-      const obj = await res.json();
-      if (obj.isPublicDomain && obj.primaryImageSmall) {
-        results.push({
-          title: obj.title,
-          date: obj.objectDate,
-          medium: obj.medium,
-          image: obj.primaryImageSmall
-        });
+  async function loadArtworks() {
+    const results = [];
+    for (const id of vanGoghIDs) {
+      try {
+        const res = await fetch(`${apiBase}/objects/${id}`);
+        if (!res.ok) continue; // skip bad IDs
+        const obj = await res.json();
+        if (obj.isPublicDomain && obj.primaryImageSmall) {
+          results.push({
+            title: obj.title,
+            date: obj.objectDate,
+            medium: obj.medium,
+            image: obj.primaryImageSmall
+          });
+        }
+      } catch (err) {
+        console.warn(`Skipping ID ${id}:`, err);
       }
-    } catch (err) {
-      console.warn(`Skipping ID ${id}:`, err);
+    }
+    artworks = results;
+    if (artworks.length) {
+      cycle();
+    } else {
+      document.getElementById('metadata').innerText = 'No artworks found!';
     }
   }
-  artworks = results;
-  cycle();
-}
 
-function cycle() {
-  if (!artworks.length) return;
-  const cat = document.getElementById('category').value;
-  let filtered = (cat === 'all') ? artworks : artworks.filter(a => a.title.includes(cat));
-  if (!filtered.length) filtered = artworks;
+  function cycle() {
+    if (!artworks.length) return;
+    const cat = document.getElementById('category').value;
+    let filtered = (cat === 'all') ? artworks : artworks.filter(a => a.title.includes(cat));
+    if (!filtered.length) filtered = artworks;
 
-  const art = filtered[index % filtered.length];
-  document.getElementById('painting').src = art.image;
-  document.getElementById('metadata').innerHTML =
-    `<strong>${art.title}</strong> (${art.date})<br>${art.medium}`;
-  index++;
-  setTimeout(cycle, 5000);
-}
-
-document.getElementById('playMusic').addEventListener('click', () => {
-  const music = document.getElementById('bgMusic');
-  if (music.paused) {
-    music.play();
-    document.getElementById('playMusic').textContent = 'Pause Music ⏸';
-  } else {
-    music.pause();
-    document.getElementById('playMusic').textContent = 'Play Music 🎵';
+    const art = filtered[index % filtered.length];
+    document.getElementById('painting').src = art.image;
+    document.getElementById('metadata').innerHTML =
+      `<strong>${art.title}</strong> (${art.date})<br>${art.medium}`;
+    index++;
+    setTimeout(cycle, 5000);
   }
-});
 
-document.getElementById('category').addEventListener('change', () => {
-  index = 0;
-});
+  // Music button
+  document.getElementById('playMusic').addEventListener('click', () => {
+    const music = document.getElementById('bgMusic');
+    if (music.paused) {
+      music.play();
+      document.getElementById('playMusic').textContent = 'Pause Music ⏸';
+    } else {
+      music.pause();
+      document.getElementById('playMusic').textContent = 'Play Music 🎵';
+    }
+  });
 
-loadArtworks();
+  // Dropdown resets slideshow index
+  document.getElementById('category').addEventListener('change', () => { index = 0; });
+
+  loadArtworks();
+});
 </script>
+</body>
+</html>
