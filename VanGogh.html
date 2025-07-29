@@ -17,6 +17,8 @@
     }
     #gallery-container {
       margin-top: 20px;
+      position: relative;
+      display: inline-block;
     }
     img {
       max-width: 80%;
@@ -38,6 +40,18 @@
       margin: 5px;
       padding: 5px;
     }
+    .nav-button {
+      font-size: 1.5em;
+      padding: 10px 20px;
+      margin: 15px;
+      background-color: #eee;
+      border: 2px solid #444;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .nav-button:hover {
+      background-color: #ddd;
+    }
   </style>
 </head>
 <body>
@@ -53,7 +67,9 @@
   </div>
   
   <div id="gallery-container">
+    <button class="nav-button" id="prevBtn">&#8592; Prev</button>
     <img id="art-image" src="" alt="Van Gogh Artwork" />
+    <button class="nav-button" id="nextBtn">Next &#8594;</button>
     <div id="info"></div>
   </div>
 
@@ -95,14 +111,28 @@
       showArtwork();
     }
 
+    function prevArtwork() {
+      if (filteredArtworks.length === 0) return;
+      currentIndex = (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length;
+      showArtwork();
+    }
+
     function startCycle() {
       clearInterval(cycleInterval);
       cycleInterval = setInterval(nextArtwork, 5000); // cycle every 5s
     }
 
-    // Filter logic
-    document.getElementById('seriesFilter').addEventListener('change', () => applyFilters());
-    document.getElementById('yearFilter').addEventListener('input', () => applyFilters());
+    // Event Listeners
+    document.getElementById('seriesFilter').addEventListener('change', applyFilters);
+    document.getElementById('yearFilter').addEventListener('input', applyFilters);
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      nextArtwork();
+      startCycle();
+    });
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      prevArtwork();
+      startCycle();
+    });
 
     function applyFilters() {
       const seriesValue = document.getElementById('seriesFilter').value;
