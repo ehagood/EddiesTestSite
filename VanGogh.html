@@ -58,11 +58,11 @@
     }
     #controls-panel.show { transform: translateY(0); }
 
-    /* Fixed positions for toggle buttons with improved spacing fix */
+    /* Fixed positions for toggle buttons with controls on left */
     #controls-toggle {
       position: fixed;
       top: 10px;
-      right: 110px;  /* pushed further left on wide screens */
+      left: 10px;       /* moved to left */
       background: #d4af37;
       color: white;
       border: none;
@@ -76,7 +76,7 @@
     #fullscreen-toggle {
       position: fixed;
       top: 10px;
-      right: 10px; /* near right edge */
+      right: 10px;      /* remains on right */
       background: #d4af37;
       color: white;
       border: none;
@@ -88,18 +88,12 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
 
-    /* Override for smaller screens */
+    /* Mobile adjustment: stack buttons */
     @media (max-width: 600px) {
       #controls-toggle, #fullscreen-toggle {
         position: static;
         display: inline-block;
         margin: 5px;
-      }
-      #controls-panel.show {
-        padding-top: 50px;
-      }
-      #controls-toggle {
-        right: auto;
       }
     }
 
