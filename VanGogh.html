@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en">  
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,20 +12,9 @@
       padding: 0;
       background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat #fdf6e3;
     }
-    h1 {
-      margin-top: 20px;
-    }
-    #gallery-container {
-      margin-top: 20px;
-      position: relative;
-      display: inline-block;
-    }
-    #frame {
-      display: inline-block;
-      padding: 15px;
-      border-radius: 8px;
-      transition: all 0.4s ease-in-out;
-    }
+    h1 { margin-top: 20px; }
+    #gallery-container { margin-top: 20px; position: relative; display: inline-block; }
+    #frame { display: inline-block; padding: 15px; border-radius: 8px; transition: all 0.4s ease-in-out; }
     #frame img {
       display: block;
       max-width: 75vw;
@@ -37,52 +26,23 @@
       transform: scale(1);
       transition: opacity 1s ease-in-out, transform 8s ease-in-out;
     }
-    #frame img.visible {
-      opacity: 1;
-      transform: scale(1.05); /* Gentle zoom-in */
-    }
-    #info {
-      margin-top: 10px;
-      font-size: 1.2em;
-    }
-    #controls {
-      margin: 20px auto;
-    }
-    select, input, button {
-      font-size: 1em;
-      margin: 5px;
-      padding: 5px;
-    }
+    #frame img.visible { opacity: 1; transform: scale(1.05); }
+    #info { margin-top: 10px; font-size: 1.2em; }
+    #controls { margin: 20px auto; }
+    select, input, button, label { font-size: 1em; margin: 5px; padding: 5px; }
     .nav-button {
-      font-size: 1.5em;
-      padding: 10px 20px;
-      margin: 15px;
-      background-color: #eee;
-      border: 2px solid #444;
-      border-radius: 6px;
-      cursor: pointer;
+      font-size: 1.5em; padding: 10px 20px; margin: 15px;
+      background-color: #eee; border: 2px solid #444; border-radius: 6px; cursor: pointer;
     }
-    .nav-button:hover {
-      background-color: #ddd;
-    }
-
+    .nav-button:hover { background-color: #ddd; }
     /* Frame styles */
-    .gold-frame {
-      background: linear-gradient(145deg, #d4af37, #b8860b);
-      border: 8px solid #8b6f47;
-      box-shadow: 0 0 0 6px #e0c97f, 0 8px 15px rgba(0,0,0,0.6);
-    }
-    .wood-frame {
-      background: linear-gradient(145deg, #4b2e14, #3b1f0e);
-      border: 8px solid #2a1407;
-      box-shadow: 0 0 0 6px #6e4b2f, 0 8px 15px rgba(0,0,0,0.6);
-    }
-    .no-frame {
-      background: none;
-      border: none;
-      box-shadow: none;
-      padding: 0;
-    }
+    .gold-frame { background: linear-gradient(145deg, #d4af37, #b8860b); border: 8px solid #8b6f47; box-shadow: 0 0 0 6px #e0c97f, 0 8px 15px rgba(0,0,0,0.6); }
+    .wood-frame { background: linear-gradient(145deg, #4b2e14, #3b1f0e); border: 8px solid #2a1407; box-shadow: 0 0 0 6px #6e4b2f, 0 8px 15px rgba(0,0,0,0.6); }
+    .no-frame { background: none; border: none; box-shadow: none; padding: 0; }
+    /* Progress bar */
+    #progress-bar-container { margin: 10px auto; width: 60%; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; }
+    #progress-bar { width: 0%; height: 100%; background: #b8860b; transition: width 0.5s ease-in-out; }
+    #chronologicalOptions { display: none; margin-left: 10px; }
   </style>
 </head>
 <body>
@@ -90,161 +50,136 @@
   
   <div id="controls">
     <label for="seriesFilter">Filter by Series:</label>
-    <select id="seriesFilter">
-      <option value="all">All</option>
-    </select>
+    <select id="seriesFilter"><option value="all">All</option></select>
     <label for="yearFilter">Year:</label>
     <input type="number" id="yearFilter" placeholder="e.g., 1889" min="1880" max="1890" />
-
     <label for="frameStyle">Frame Style:</label>
     <select id="frameStyle">
       <option value="gold">Gold Frame</option>
       <option value="wood">Wood Frame</option>
       <option value="none">No Frame</option>
     </select>
-    
-    <!-- Music Button -->
+    <br />
+    <label>Cycling Mode:</label>
+    <label><input type="radio" name="cycleMode" value="random" checked> Random</label>
+    <label><input type="radio" name="cycleMode" value="chronological"> Chronological</label>
+    <div id="chronologicalOptions">
+      <label><input type="checkbox" id="reverseOrder"> Reverse Order</label>
+    </div>
+    <br />
+    <label for="speedControl">Slideshow Speed:</label>
+    <select id="speedControl">
+      <option value="5000" selected>5 seconds</option>
+      <option value="10000">10 seconds</option>
+      <option value="15000">15 seconds</option>
+    </select>
+    <br />
     <button id="musicBtn">Play Music 🎵</button>
   </div>
   
   <div id="gallery-container">
     <button class="nav-button" id="prevBtn">&#8592; Prev</button>
-    
     <div id="frame" class="gold-frame">
       <img id="art-image" src="" alt="Van Gogh Artwork" />
     </div>
-    
     <button class="nav-button" id="nextBtn">Next &#8594;</button>
     <div id="info"></div>
+    <div id="progress-bar-container"><div id="progress-bar"></div></div>
   </div>
 
   <script>
-    let artworks = [];
-    let filteredArtworks = [];
-    let currentIndex = 0;
-    let cycleInterval;
-    let historyStack = [];
+    let artworks = [], filteredArtworks = [];
+    let currentIndex = 0, cycleInterval, historyStack = [];
+    let cycleMode = 'random', reverseOrder = false;
+    let cycleSpeed = 5000; // Default: 5 seconds
     const frameStyles = ['gold-frame', 'wood-frame', 'no-frame'];
-    let currentFrameIndex = 0;
-
-    const music = new Audio("https://upload.wikimedia.org/wikipedia/commons/9/9d/Bach_-_Cello_Suite_no._1_in_G_major%2C_BWV_1007_-_I._Pr%C3%A9lude.ogg");
-    music.loop = true;
-    let musicPlaying = false;
+    const music = new Audio("https://upload.wikimedia.org/wikipedia/commons/1/1e/Air_%28Bach%29.ogg");
+    music.loop = true; let musicPlaying = false;
 
     async function loadArtworks() {
       const res = await fetch('vangogh.json');
       artworks = await res.json();
-
-      // Populate series dropdown dynamically
+      // Populate series dropdown
       const seriesSet = new Set(artworks.map(a => a.series));
       const seriesFilter = document.getElementById('seriesFilter');
       seriesSet.forEach(series => {
         const option = document.createElement('option');
-        option.value = series;
-        option.textContent = series;
+        option.value = series; option.textContent = series;
         seriesFilter.appendChild(option);
       });
-
       filteredArtworks = shuffleArray([...artworks]);
-      showArtwork();
-      startCycle();
+      showArtwork(); startCycle();
     }
 
     function showArtwork() {
-      if (filteredArtworks.length === 0) return;
-      const art = filteredArtworks[currentIndex];
-      const img = document.getElementById('art-image');
-
-      // Fade transition
+      if (!filteredArtworks.length) return;
+      const art = filteredArtworks[currentIndex], img = document.getElementById('art-image');
       img.classList.remove('visible');
-      setTimeout(() => {
-        img.src = art.image;
-        img.onload = () => {
-          img.classList.add('visible');
-        };
-      }, 200);
-
-      document.getElementById('info').textContent = `${art.title} (${art.date}) - ${art.series}`;
+      setTimeout(() => { img.src = art.image; img.onload = () => img.classList.add('visible'); }, 200);
+      const total = filteredArtworks.length, pos = currentIndex + 1;
+      document.getElementById('info').textContent = `${art.title} (${art.date}) - ${art.series} [${pos} of ${total}]`;
+      document.getElementById('progress-bar').style.width = `${(pos/total)*100}%`;
     }
 
     function nextArtwork() {
-      if (filteredArtworks.length === 0) return;
+      if (!filteredArtworks.length) return;
       historyStack.push(currentIndex);
-      currentIndex = Math.floor(Math.random() * filteredArtworks.length);
+      currentIndex = (cycleMode === 'random')
+        ? Math.floor(Math.random() * filteredArtworks.length)
+        : reverseOrder
+          ? (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length
+          : (currentIndex + 1) % filteredArtworks.length;
       showArtwork();
     }
 
-    function prevArtwork() {
-      if (historyStack.length > 0) {
-        currentIndex = historyStack.pop();
-        showArtwork();
-      }
-    }
-
-    function startCycle() {
-      clearInterval(cycleInterval);
-      cycleInterval = setInterval(nextArtwork, 5000);
-    }
-
-    function shuffleArray(array) {
-      return array.sort(() => Math.random() - 0.5);
-    }
+    function prevArtwork() { if (historyStack.length) { currentIndex = historyStack.pop(); showArtwork(); } }
+    function startCycle() { clearInterval(cycleInterval); cycleInterval = setInterval(nextArtwork, cycleSpeed); }
+    function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
 
     function applyFilters() {
-      const seriesValue = document.getElementById('seriesFilter').value;
-      const yearValue = document.getElementById('yearFilter').value.trim();
-
-      filteredArtworks = artworks.filter(a => {
-        const matchesSeries = (seriesValue === 'all' || a.series === seriesValue);
-        const matchesYear = (yearValue === '' || a.date === yearValue);
-        return matchesSeries && matchesYear;
-      });
-
-      filteredArtworks = shuffleArray(filteredArtworks);
-      historyStack = [];
-      currentIndex = 0;
-      showArtwork();
-      startCycle();
+      const seriesVal = document.getElementById('seriesFilter').value, yearVal = document.getElementById('yearFilter').value.trim();
+      filteredArtworks = artworks.filter(a =>
+        (seriesVal === 'all' || a.series === seriesVal) &&
+        (yearVal === '' || a.date === yearVal)
+      );
+      if (cycleMode === 'chronological') {
+        filteredArtworks.sort((a,b) => (parseInt(a.date)||0)-(parseInt(b.date)||0));
+        if (reverseOrder) filteredArtworks.reverse();
+      } else filteredArtworks = shuffleArray(filteredArtworks);
+      historyStack = []; currentIndex = 0; showArtwork(); startCycle();
     }
 
-    // Event Listeners
+    // Event listeners
     document.getElementById('seriesFilter').addEventListener('change', applyFilters);
     document.getElementById('yearFilter').addEventListener('input', applyFilters);
-    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
-    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
+    document.getElementById('nextBtn').addEventListener('click', ()=>{ nextArtwork(); startCycle(); });
+    document.getElementById('prevBtn').addEventListener('click', ()=>{ prevArtwork(); startCycle(); });
+    document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
 
-    document.getElementById('frameStyle').addEventListener('change', (e) => {
-      setFrameStyle(e.target.value);
+    document.querySelectorAll('input[name="cycleMode"]').forEach(r => {
+      r.addEventListener('change', e => {
+        cycleMode = e.target.value;
+        document.getElementById('chronologicalOptions').style.display = cycleMode === 'chronological' ? 'inline-block':'none';
+        applyFilters();
+      });
     });
 
-    // Music toggle
+    document.getElementById('reverseOrder').addEventListener('change', e => { reverseOrder = e.target.checked; applyFilters(); });
+
+    // Slideshow speed change
+    document.getElementById('speedControl').addEventListener('change', e => {
+      cycleSpeed = parseInt(e.target.value);
+      startCycle();
+    });
+
     document.getElementById('musicBtn').addEventListener('click', () => {
-      if (!musicPlaying) {
-        music.play();
-        musicPlaying = true;
-        document.getElementById('musicBtn').textContent = "Pause Music ⏸️";
-      } else {
-        music.pause();
-        musicPlaying = false;
-        document.getElementById('musicBtn').textContent = "Play Music 🎵";
-      }
+      if (!musicPlaying) { music.play(); musicPlaying = true; document.getElementById('musicBtn').textContent="Pause Music ⏸️";}
+      else { music.pause(); musicPlaying = false; document.getElementById('musicBtn').textContent="Play Music 🎵"; }
     });
 
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') {
-        nextArtwork();
-        startCycle();
-      }
-      if (e.key === 'ArrowLeft') {
-        prevArtwork();
-        startCycle();
-      }
-      if (e.key.toLowerCase() === 'f') {
-        currentFrameIndex = (currentFrameIndex + 1) % frameStyles.length;
-        setFrameStyle(frameStyles[currentFrameIndex].split('-')[0]);
-        document.getElementById('frameStyle').value = frameStyles[currentFrameIndex].split('-')[0];
-      }
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight') { nextArtwork(); startCycle(); }
+      if (e.key === 'ArrowLeft') { prevArtwork(); startCycle(); }
     });
 
     function setFrameStyle(style) {
