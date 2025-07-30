@@ -58,11 +58,11 @@
     }
     #controls-panel.show { transform: translateY(0); }
 
-    /* Fixed positions for toggle buttons with spacing fix */
+    /* Fixed positions for toggle buttons with improved spacing fix */
     #controls-toggle {
       position: fixed;
       top: 10px;
-      right: 80px;  /* pushed left to prevent overlap */
+      right: 110px;  /* pushed further left on wide screens */
       background: #d4af37;
       color: white;
       border: none;
@@ -86,6 +86,21 @@
       border-radius: 6px;
       z-index: 1100;
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    /* Override for smaller screens */
+    @media (max-width: 600px) {
+      #controls-toggle, #fullscreen-toggle {
+        position: static;
+        display: inline-block;
+        margin: 5px;
+      }
+      #controls-panel.show {
+        padding-top: 50px;
+      }
+      #controls-toggle {
+        right: auto;
+      }
     }
 
     select, input, button, label {
@@ -114,17 +129,6 @@
     .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
     .fullscreen #spotlight { display: block; opacity: 1; }
 
-    /* Responsive for small screens */
-    @media (max-width: 480px) {
-      #controls-toggle, #fullscreen-toggle {
-        position: static;
-        display: inline-block;
-        margin: 5px;
-      }
-      #controls-panel.show {
-        padding-top: 50px;
-      }
-    }
   </style>
 </head>
 <body>
