@@ -8,9 +8,10 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      background-color: #fdf6e3;
       margin: 0;
       padding: 0;
+      /* Subtle wallpaper texture */
+      background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat #fdf6e3;
     }
     h1 {
       margin-top: 20px;
@@ -113,6 +114,9 @@
     let filteredArtworks = [];
     let currentIndex = 0;
     let cycleInterval;
+    let historyStack = [];
+    const frameStyles = ['gold-frame', 'wood-frame', 'no-frame'];
+    let currentFrameIndex = 0;
 
     async function loadArtworks() {
       const res = await fetch('vangogh.json');
@@ -128,7 +132,7 @@
         seriesFilter.appendChild(option);
       });
 
-      filteredArtworks = [...artworks];
+      filteredArtworks = shuffleArray([...artworks]);
       showArtwork();
       startCycle();
     }
@@ -142,35 +146,26 @@
 
     function nextArtwork() {
       if (filteredArtworks.length === 0) return;
-      currentIndex = (currentIndex + 1) % filteredArtworks.length;
+      historyStack.push(currentIndex);
+      currentIndex = Math.floor(Math.random() * filteredArtworks.length);
       showArtwork();
     }
 
     function prevArtwork() {
-      if (filteredArtworks.length === 0) return;
-      currentIndex = (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length;
-      showArtwork();
+      if (historyStack.length > 0) {
+        currentIndex = historyStack.pop();
+        showArtwork();
+      }
     }
 
     function startCycle() {
       clearInterval(cycleInterval);
-      cycleInterval = setInterval(nextArtwork, 5000); // cycle every 5s
+      cycleInterval = setInterval(nextArtwork, 5000);
     }
 
-    // Event Listeners
-    document.getElementById('seriesFilter').addEventListener('change', applyFilters);
-    document.getElementById('yearFilter').addEventListener('input', applyFilters);
-    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
-    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
-
-    // Frame style change
-    document.getElementById('frameStyle').addEventListener('change', (e) => {
-      const frameDiv = document.getElementById('frame');
-      frameDiv.className = ''; // reset
-      if (e.target.value === 'gold') frameDiv.classList.add('gold-frame');
-      else if (e.target.value === 'wood') frameDiv.classList.add('wood-frame');
-      else frameDiv.classList.add('no-frame');
-    });
+    function shuffleArray(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
 
     function applyFilters() {
       const seriesValue = document.getElementById('seriesFilter').value;
@@ -182,9 +177,47 @@
         return matchesSeries && matchesYear;
       });
 
+      filteredArtworks = shuffleArray(filteredArtworks);
+      historyStack = [];
       currentIndex = 0;
       showArtwork();
       startCycle();
+    }
+
+    // Event Listeners
+    document.getElementById('seriesFilter').addEventListener('change', applyFilters);
+    document.getElementById('yearFilter').addEventListener('input', applyFilters);
+    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
+    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
+
+    document.getElementById('frameStyle').addEventListener('change', (e) => {
+      setFrameStyle(e.target.value);
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        nextArtwork();
+        startCycle();
+      }
+      if (e.key === 'ArrowLeft') {
+        prevArtwork();
+        startCycle();
+      }
+      if (e.key.toLowerCase() === 'f') {
+        // Cycle through frame styles
+        currentFrameIndex = (currentFrameIndex + 1) % frameStyles.length;
+        setFrameStyle(frameStyles[currentFrameIndex].split('-')[0]); // sync dropdown
+        document.getElementById('frameStyle').value = frameStyles[currentFrameIndex].split('-')[0];
+      }
+    });
+
+    function setFrameStyle(style) {
+      const frameDiv = document.getElementById('frame');
+      frameDiv.className = '';
+      if (style === 'gold') frameDiv.classList.add('gold-frame');
+      else if (style === 'wood') frameDiv.classList.add('wood-frame');
+      else frameDiv.classList.add('no-frame');
     }
 
     window.onload = loadArtworks;
