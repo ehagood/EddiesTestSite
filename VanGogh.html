@@ -102,6 +102,9 @@
       <option value="wood">Wood Frame</option>
       <option value="none">No Frame</option>
     </select>
+    
+    <!-- Music Button -->
+    <button id="musicBtn">Play Music 🎵</button>
   </div>
   
   <div id="gallery-container">
@@ -123,6 +126,10 @@
     let historyStack = [];
     const frameStyles = ['gold-frame', 'wood-frame', 'no-frame'];
     let currentFrameIndex = 0;
+
+    const music = new Audio("https://upload.wikimedia.org/wikipedia/commons/1/1e/Air_%28Bach%29.ogg");
+    music.loop = true;
+    let musicPlaying = false;
 
     async function loadArtworks() {
       const res = await fetch('vangogh.json');
@@ -148,7 +155,7 @@
       const art = filteredArtworks[currentIndex];
       const img = document.getElementById('art-image');
 
-      // Fade out, swap, fade in
+      // Fade transition
       img.classList.remove('visible');
       setTimeout(() => {
         img.src = art.image;
@@ -208,6 +215,19 @@
 
     document.getElementById('frameStyle').addEventListener('change', (e) => {
       setFrameStyle(e.target.value);
+    });
+
+    // Music toggle
+    document.getElementById('musicBtn').addEventListener('click', () => {
+      if (!musicPlaying) {
+        music.play();
+        musicPlaying = true;
+        document.getElementById('musicBtn').textContent = "Pause Music ⏸️";
+      } else {
+        music.pause();
+        musicPlaying = false;
+        document.getElementById('musicBtn').textContent = "Play Music 🎵";
+      }
     });
 
     // Keyboard navigation
