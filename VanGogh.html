@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">  
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -74,6 +74,7 @@
       <option value="15000">15 seconds</option>
     </select>
     <br />
+    <button id="pauseBtn">🛑 Pause Slideshow</button>
     <button id="musicBtn">Play Music 🎵</button>
   </div>
   
@@ -90,8 +91,8 @@
   <script>
     let artworks = [], filteredArtworks = [];
     let currentIndex = 0, cycleInterval, historyStack = [];
-    let cycleMode = 'random', reverseOrder = false;
-    let cycleSpeed = 5000; // Default: 5 seconds
+    let cycleMode = 'random', reverseOrder = false, cycleSpeed = 5000;
+    let isPaused = false;
     const frameStyles = ['gold-frame', 'wood-frame', 'no-frame'];
     const music = new Audio("https://upload.wikimedia.org/wikipedia/commons/1/1e/Air_%28Bach%29.ogg");
     music.loop = true; let musicPlaying = false;
@@ -99,7 +100,6 @@
     async function loadArtworks() {
       const res = await fetch('vangogh.json');
       artworks = await res.json();
-      // Populate series dropdown
       const seriesSet = new Set(artworks.map(a => a.series));
       const seriesFilter = document.getElementById('seriesFilter');
       seriesSet.forEach(series => {
@@ -133,7 +133,7 @@
     }
 
     function prevArtwork() { if (historyStack.length) { currentIndex = historyStack.pop(); showArtwork(); } }
-    function startCycle() { clearInterval(cycleInterval); cycleInterval = setInterval(nextArtwork, cycleSpeed); }
+    function startCycle() { if (!isPaused) { clearInterval(cycleInterval); cycleInterval = setInterval(nextArtwork, cycleSpeed); } }
     function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
 
     function applyFilters() {
@@ -167,19 +167,31 @@
     document.getElementById('reverseOrder').addEventListener('change', e => { reverseOrder = e.target.checked; applyFilters(); });
 
     // Slideshow speed change
-    document.getElementById('speedControl').addEventListener('change', e => {
-      cycleSpeed = parseInt(e.target.value);
-      startCycle();
+    document.getElementById('speedControl').addEventListener('change', e => { cycleSpeed = parseInt(e.target.value); startCycle(); });
+
+    // Pause/Resume toggle
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      isPaused = !isPaused;
+      if (isPaused) {
+        clearInterval(cycleInterval);
+        document.getElementById('pauseBtn').textContent = "▶️ Resume Slideshow";
+      } else {
+        startCycle();
+        document.getElementById('pauseBtn').textContent = "🛑 Pause Slideshow";
+      }
     });
 
+    // Music toggle
     document.getElementById('musicBtn').addEventListener('click', () => {
       if (!musicPlaying) { music.play(); musicPlaying = true; document.getElementById('musicBtn').textContent="Pause Music ⏸️";}
       else { music.pause(); musicPlaying = false; document.getElementById('musicBtn').textContent="Play Music 🎵"; }
     });
 
+    // Keyboard navigation
     document.addEventListener('keydown', e => {
       if (e.key === 'ArrowRight') { nextArtwork(); startCycle(); }
       if (e.key === 'ArrowLeft') { prevArtwork(); startCycle(); }
+      if (e.key.toLowerCase() === ' ') { e.preventDefault(); document.getElementById('pauseBtn').click(); } // Space toggles pause
     });
 
     function setFrameStyle(style) {
