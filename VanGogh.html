@@ -15,7 +15,7 @@
     }
     h1 { margin: 10px 0; transition: opacity 0.3s ease-in-out; }
     #gallery-container { margin-top: 10px; position: relative; display: inline-block; }
-    #frame { display: inline-block; padding: 15px; border-radius: 8px; transition: all 0.4s ease-in-out; }
+    #frame { display: inline-block; padding: 15px; border-radius: 8px; transition: all 0.4s ease-in-out; position: relative; z-index: 2; }
     #frame img {
       display: block;
       max-width: 75vw;
@@ -29,6 +29,19 @@
     }
     #frame img.visible { opacity: 1; transform: scale(1.05); }
     #info { margin-top: 8px; font-size: 1.2em; transition: opacity 0.3s ease-in-out; }
+
+    /* Spotlight effect for fullscreen */
+    #spotlight {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.8) 100%);
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.5s ease-in-out;
+    }
 
     /* Collapsible & Auto-Hide Controls */
     #controls-panel {
@@ -84,16 +97,20 @@
     /* Fullscreen adjustments */
     .fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
     .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
+    .fullscreen #spotlight { display: block; opacity: 1; }
   </style>
 </head>
 <body>
   <h1>Vincent van Gogh Gallery</h1>
   
+  <!-- Spotlight overlay -->
+  <div id="spotlight"></div>
+
   <!-- Toggle buttons -->
   <button id="controls-toggle">⚙️ Controls</button>
   <button id="fullscreen-toggle">⛶ Fullscreen</button>
   
-  <!-- Collapsible controls panel -->
+  <!-- Controls panel -->
   <div id="controls-panel">
     <label for="seriesFilter">Series:</label>
     <select id="seriesFilter"><option value="all">All</option></select>
@@ -138,7 +155,7 @@
     let currentIndex = 0, cycleInterval, historyStack = [];
     let cycleMode = 'random', reverseOrder = false, cycleSpeed = 5000;
     let isPaused = false;
-    const music = new Audio("https://upload.wikimedia.org/wikipedia/commons/1/1e/Air_%28Bach%29.ogg");
+    const music = new Audio("https://upload.wikimedia.org/wikipedia/commons/9/9d/Bach_-_Cello_Suite_no._1_in_G_major%2C_BWV_1007_-_I._Pr%C3%A9lude.ogg");
     music.loop = true; let musicPlaying = false;
     let hideControlsTimeout;
 
@@ -189,16 +206,19 @@
     function resetHideTimer() { if (hideControlsTimeout) clearTimeout(hideControlsTimeout); if (controlsPanel.classList.contains('show')) hideControlsTimeout = setTimeout(() => controlsPanel.classList.remove('show'), 5000); }
     document.addEventListener('mousemove', e => { if (e.clientY < 80) { controlsPanel.classList.add('show'); resetHideTimer(); } });
 
-    // Fullscreen toggle
+    // Fullscreen toggle + spotlight
     const fullscreenBtn = document.getElementById('fullscreen-toggle');
+    const spotlight = document.getElementById('spotlight');
     fullscreenBtn.addEventListener('click', () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
         document.body.classList.add('fullscreen');
+        spotlight.style.display = "block";
         fullscreenBtn.textContent = "⛶ Exit Fullscreen";
       } else {
         document.exitFullscreen();
         document.body.classList.remove('fullscreen');
+        spotlight.style.display = "none";
         fullscreenBtn.textContent = "⛶ Fullscreen";
       }
     });
