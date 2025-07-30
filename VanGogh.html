@@ -142,6 +142,13 @@
   
   <!-- Controls panel -->
   <div id="controls-panel">
+    <label for="artistSelect">Artist:</label>
+      <select id="artistSelect">
+      <option value="vangogh">Vincent van Gogh</option>
+      <option value="bobross">Bob Ross</option>
+    <!-- Future artists -->
+    </select>
+
     <label for="seriesFilter">Series:</label>
     <select id="seriesFilter"><option value="all">All</option></select>
     <label for="yearFilter">Year:</label>
@@ -189,8 +196,8 @@
     music.loop = true; let musicPlaying = false;
     let hideControlsTimeout;
 
-    async function loadArtworks() {
-      const res = await fetch('vangogh.json');
+    async function loadArtworks(artist = 'vangogh') {
+      const res = await fetch('${artist}.json');
       artworks = await res.json();
       const seriesSet = new Set(artworks.map(a => a.series));
       const seriesFilter = document.getElementById('seriesFilter');
@@ -347,6 +354,10 @@
         musicPlaying = false;
         document.getElementById('musicBtn').textContent = "Play 🎵";
       }
+    });
+
+    document.getElementById('artistSelect').addEventListener('change', (e) => {
+      loadArtworks(e.target.value);
     });
 
     document.addEventListener('keydown', e => {
