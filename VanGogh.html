@@ -10,7 +10,6 @@
       text-align: center;
       margin: 0;
       padding: 0;
-      /* Subtle wallpaper texture */
       background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat #fdf6e3;
     }
     h1 {
@@ -34,6 +33,13 @@
       border: 4px solid #fff;
       box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
       background-color: #fff;
+      opacity: 0;
+      transform: scale(1);
+      transition: opacity 1s ease-in-out, transform 8s ease-in-out;
+    }
+    #frame img.visible {
+      opacity: 1;
+      transform: scale(1.05); /* Gentle zoom-in */
     }
     #info {
       margin-top: 10px;
@@ -140,7 +146,17 @@
     function showArtwork() {
       if (filteredArtworks.length === 0) return;
       const art = filteredArtworks[currentIndex];
-      document.getElementById('art-image').src = art.image;
+      const img = document.getElementById('art-image');
+
+      // Fade out, swap, fade in
+      img.classList.remove('visible');
+      setTimeout(() => {
+        img.src = art.image;
+        img.onload = () => {
+          img.classList.add('visible');
+        };
+      }, 200);
+
       document.getElementById('info').textContent = `${art.title} (${art.date}) - ${art.series}`;
     }
 
@@ -205,9 +221,8 @@
         startCycle();
       }
       if (e.key.toLowerCase() === 'f') {
-        // Cycle through frame styles
         currentFrameIndex = (currentFrameIndex + 1) % frameStyles.length;
-        setFrameStyle(frameStyles[currentFrameIndex].split('-')[0]); // sync dropdown
+        setFrameStyle(frameStyles[currentFrameIndex].split('-')[0]);
         document.getElementById('frameStyle').value = frameStyles[currentFrameIndex].split('-')[0];
       }
     });
