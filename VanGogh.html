@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Van Gogh Gallery</title>
   <style>
     body {
@@ -57,9 +57,12 @@
       padding: 10px;
     }
     #controls-panel.show { transform: translateY(0); }
-    #controls-toggle, #fullscreen-toggle {
+
+    /* Fixed positions for toggle buttons with spacing fix */
+    #controls-toggle {
       position: fixed;
       top: 10px;
+      right: 80px;  /* pushed left to prevent overlap */
       background: #d4af37;
       color: white;
       border: none;
@@ -70,8 +73,20 @@
       z-index: 1100;
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
-    #controls-toggle { right: 60px; }
-    #fullscreen-toggle { right: 10px; }
+    #fullscreen-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px; /* near right edge */
+      background: #d4af37;
+      color: white;
+      border: none;
+      font-size: 1.2em;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      z-index: 1100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
 
     select, input, button, label {
       font-size: 0.9em;
@@ -98,6 +113,18 @@
     .fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
     .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
     .fullscreen #spotlight { display: block; opacity: 1; }
+
+    /* Responsive for small screens */
+    @media (max-width: 480px) {
+      #controls-toggle, #fullscreen-toggle {
+        position: static;
+        display: inline-block;
+        margin: 5px;
+      }
+      #controls-panel.show {
+        padding-top: 50px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -183,28 +210,72 @@
       document.getElementById('progress-bar').style.width = `${(pos/total)*100}%`;
     }
 
-    function nextArtwork() { historyStack.push(currentIndex); currentIndex = cycleMode === 'random' ? Math.floor(Math.random() * filteredArtworks.length) : reverseOrder ? (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length : (currentIndex + 1) % filteredArtworks.length; showArtwork(); }
-    function prevArtwork() { if (historyStack.length) { currentIndex = historyStack.pop(); showArtwork(); } }
-    function startCycle() { if (!isPaused) { clearInterval(cycleInterval); cycleInterval = setInterval(nextArtwork, cycleSpeed); } }
-    function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
+    function nextArtwork() {
+      historyStack.push(currentIndex);
+      if (cycleMode === 'random') {
+        currentIndex = Math.floor(Math.random() * filteredArtworks.length);
+      } else {
+        currentIndex = reverseOrder
+          ? (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length
+          : (currentIndex + 1) % filteredArtworks.length;
+      }
+      showArtwork();
+    }
+
+    function prevArtwork() {
+      if (historyStack.length) {
+        currentIndex = historyStack.pop();
+        showArtwork();
+      }
+    }
+
+    function startCycle() {
+      if (!isPaused) {
+        clearInterval(cycleInterval);
+        cycleInterval = setInterval(nextArtwork, cycleSpeed);
+      }
+    }
+
+    function shuffleArray(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
 
     function applyFilters() {
-      const seriesVal = document.getElementById('seriesFilter').value, yearVal = document.getElementById('yearFilter').value.trim();
-      filteredArtworks = artworks.filter(a => (seriesVal === 'all' || a.series === seriesVal) && (yearVal === '' || a.date === yearVal));
+      const seriesVal = document.getElementById('seriesFilter').value,
+        yearVal = document.getElementById('yearFilter').value.trim();
+      filteredArtworks = artworks.filter(a =>
+        (seriesVal === 'all' || a.series === seriesVal) &&
+        (yearVal === '' || a.date === yearVal)
+      );
       if (cycleMode === 'chronological') {
-        filteredArtworks.sort((a,b) => (parseInt(a.date)||0)-(parseInt(b.date)||0));
+        filteredArtworks.sort((a, b) => (parseInt(a.date) || 0) - (parseInt(b.date) || 0));
         if (reverseOrder) filteredArtworks.reverse();
       } else filteredArtworks = shuffleArray(filteredArtworks);
-      historyStack = []; currentIndex = 0; showArtwork(); startCycle();
+      historyStack = [];
+      currentIndex = 0;
+      showArtwork();
+      startCycle();
     }
 
     // Toggle controls panel
     const controlsPanel = document.getElementById('controls-panel');
-    document.getElementById('controls-toggle').addEventListener('click', () => { controlsPanel.classList.toggle('show'); resetHideTimer(); });
+    document.getElementById('controls-toggle').addEventListener('click', () => {
+      controlsPanel.classList.toggle('show');
+      resetHideTimer();
+    });
 
     // Auto-hide controls
-    function resetHideTimer() { if (hideControlsTimeout) clearTimeout(hideControlsTimeout); if (controlsPanel.classList.contains('show')) hideControlsTimeout = setTimeout(() => controlsPanel.classList.remove('show'), 5000); }
-    document.addEventListener('mousemove', e => { if (e.clientY < 80) { controlsPanel.classList.add('show'); resetHideTimer(); } });
+    function resetHideTimer() {
+      if (hideControlsTimeout) clearTimeout(hideControlsTimeout);
+      if (controlsPanel.classList.contains('show'))
+        hideControlsTimeout = setTimeout(() => controlsPanel.classList.remove('show'), 5000);
+    }
+    document.addEventListener('mousemove', e => {
+      if (e.clientY < 80) {
+        controlsPanel.classList.add('show');
+        resetHideTimer();
+      }
+    });
 
     // Fullscreen toggle + spotlight
     const fullscreenBtn = document.getElementById('fullscreen-toggle');
@@ -226,20 +297,77 @@
     // Event listeners
     document.getElementById('seriesFilter').addEventListener('change', applyFilters);
     document.getElementById('yearFilter').addEventListener('input', applyFilters);
-    document.getElementById('nextBtn').addEventListener('click', ()=>{ nextArtwork(); startCycle(); });
-    document.getElementById('prevBtn').addEventListener('click', ()=>{ prevArtwork(); startCycle(); });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      nextArtwork();
+      startCycle();
+    });
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      prevArtwork();
+      startCycle();
+    });
     document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
     document.querySelectorAll('input[name="cycleMode"]').forEach(r => {
-      r.addEventListener('change', e => { cycleMode = e.target.value; document.getElementById('chronologicalOptions').style.display = cycleMode === 'chronological' ? 'inline-block':'none'; applyFilters(); });
+      r.addEventListener('change', e => {
+        cycleMode = e.target.value;
+        document.getElementById('chronologicalOptions').style.display =
+          cycleMode === 'chronological' ? 'inline-block' : 'none';
+        applyFilters();
+      });
     });
-    document.getElementById('reverseOrder').addEventListener('change', e => { reverseOrder = e.target.checked; applyFilters(); });
-    document.getElementById('speedControl').addEventListener('change', e => { cycleSpeed = parseInt(e.target.value); startCycle(); });
+    document.getElementById('reverseOrder').addEventListener('change', e => {
+      reverseOrder = e.target.checked;
+      applyFilters();
+    });
+    document.getElementById('speedControl').addEventListener('change', e => {
+      cycleSpeed = parseInt(e.target.value);
+      startCycle();
+    });
 
-    document.getElementById('pauseBtn').addEventListener('click', () => { isPaused = !isPaused; if (isPaused) { clearInterval(cycleInterval); document.getElementById('pauseBtn').textContent = "▶️ Resume"; } else { startCycle(); document.getElementById('pauseBtn').textContent = "🛑 Pause"; } });
-    document.getElementById('musicBtn').addEventListener('click', () => { if (!musicPlaying) { music.play(); musicPlaying = true; document.getElementById('musicBtn').textContent="Pause 🎵";} else { music.pause(); musicPlaying = false; document.getElementById('musicBtn').textContent="Play 🎵"; } });
-    document.addEventListener('keydown', e => { if (e.key === 'ArrowRight') { nextArtwork(); startCycle(); } if (e.key === 'ArrowLeft') { prevArtwork(); startCycle(); } if (e.key === ' ') { e.preventDefault(); document.getElementById('pauseBtn').click(); } });
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      isPaused = !isPaused;
+      if (isPaused) {
+        clearInterval(cycleInterval);
+        document.getElementById('pauseBtn').textContent = "▶️ Resume";
+      } else {
+        startCycle();
+        document.getElementById('pauseBtn').textContent = "🛑 Pause";
+      }
+    });
 
-    function setFrameStyle(style) { const frameDiv = document.getElementById('frame'); frameDiv.className = ''; if (style === 'gold') frameDiv.classList.add('gold-frame'); else if (style === 'wood') frameDiv.classList.add('wood-frame'); else frameDiv.classList.add('no-frame'); }
+    document.getElementById('musicBtn').addEventListener('click', () => {
+      if (!musicPlaying) {
+        music.play();
+        musicPlaying = true;
+        document.getElementById('musicBtn').textContent = "Pause 🎵";
+      } else {
+        music.pause();
+        musicPlaying = false;
+        document.getElementById('musicBtn').textContent = "Play 🎵";
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight') {
+        nextArtwork();
+        startCycle();
+      }
+      if (e.key === 'ArrowLeft') {
+        prevArtwork();
+        startCycle();
+      }
+      if (e.key === ' ') {
+        e.preventDefault();
+        document.getElementById('pauseBtn').click();
+      }
+    });
+
+    function setFrameStyle(style) {
+      const frameDiv = document.getElementById('frame');
+      frameDiv.className = '';
+      if (style === 'gold') frameDiv.classList.add('gold-frame');
+      else if (style === 'wood') frameDiv.classList.add('wood-frame');
+      else frameDiv.classList.add('no-frame');
+    }
 
     window.onload = loadArtworks;
   </script>
