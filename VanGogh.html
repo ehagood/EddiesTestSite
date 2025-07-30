@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Van Gogh Gallery</title>
+
+  <!-- Embedded favicon and apple-touch-icon with Starry Night base64 PNG -->
+  <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAC4b6kXAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAV0lEQVR4nO3MMQEAAAgDINc/9K3hBFQZFA4YyUYIuEDuRGzGZCmZCWYkmZCWYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TymX0FQ12RpkEAAAAASUVORK5CYII=" />
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAC4b6kXAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAV0lEQVR4nO3MMQEAAAgDINc/9K3hBFQZFA4YyUYIuEDuRGzGZCmZCWYkmZCWYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TymX0FQ12RpkEAAAAASUVORK5CYII=" />
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -62,7 +67,7 @@
     #controls-toggle {
       position: fixed;
       top: 10px;
-      left: 10px;       /* moved to left */
+      left: 10px;
       background: #d4af37;
       color: white;
       border: none;
@@ -76,7 +81,7 @@
     #fullscreen-toggle {
       position: fixed;
       top: 10px;
-      right: 10px;      /* remains on right */
+      right: 10px;
       background: #d4af37;
       color: white;
       border: none;
@@ -353,21 +358,22 @@
         prevArtwork();
         startCycle();
       }
-      if (e.key === ' ') {
-        e.preventDefault();
-        document.getElementById('pauseBtn').click();
-      }
     });
 
+    // Frame style update
     function setFrameStyle(style) {
-      const frameDiv = document.getElementById('frame');
-      frameDiv.className = '';
-      if (style === 'gold') frameDiv.classList.add('gold-frame');
-      else if (style === 'wood') frameDiv.classList.add('wood-frame');
-      else frameDiv.classList.add('no-frame');
+      const frame = document.getElementById('frame');
+      frame.className = '';
+      if (style === 'gold') frame.classList.add('gold-frame');
+      else if (style === 'wood') frame.classList.add('wood-frame');
+      else frame.classList.add('no-frame');
     }
 
-    window.onload = loadArtworks;
+    // Initialize frame style
+    setFrameStyle(document.getElementById('frameStyle').value);
+
+    // Start everything
+    loadArtworks();
   </script>
 </body>
 </html>
