@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bob Ross Gallery</title>
+  <style>
+    /* Keep your existing styles as-is */
+  </style>
+</head>
+<body>
+  <h1>Bob Ross Gallery</h1>
+
+  <div id="spotlight"></div>
+  <button id="controls-toggle">⚙️ Controls</button>
+  <button id="fullscreen-toggle">⛶ Fullscreen</button>
+
+  <div id="controls-panel">
+    <label for="seasonFilter">Season:</label>
+    <select id="seasonFilter"><option value="all">All</option></select>
+    <label for="episodeFilter">Episode:</label>
+    <input type="number" id="episodeFilter" placeholder="e.g., 10" min="1" max="13" />
+    <label for="frameStyle">Frame:</label>
+    <select id="frameStyle">
+      <option value="gold">Gold</option>
+      <option value="wood">Wood</option>
+      <option value="none">None</option>
+    </select>
+    <br />
+    <label>Mode:</label>
+    <label><input type="radio" name="cycleMode" value="random" checked> Random</label>
+    <label><input type="radio" name="cycleMode" value="chronological"> Chronological</label>
+    <span id="chronologicalOptions">
+      <label><input type="checkbox" id="reverseOrder"> Reverse</label>
+    </span>
+    <label for="speedControl">Speed:</label>
+    <select id="speedControl">
+      <option value="5000" selected>5s</option>
+      <option value="10000">10s</option>
+      <option value="15000">15s</option>
+    </select>
+    <button id="pauseBtn">🛑 Pause</button>
+  </div>
+
+  <div id="gallery-container">
+    <button class="nav-button" id="prevBtn">&#8592; Prev</button>
+    <div id="frame" class="gold-frame">
+      <img id="art-image" src="" alt="Bob Ross Painting" />
+    </div>
+    <button class="nav-button" id="nextBtn">Next &#8594;</button>
+    <div id="info"></div>
+    <div id="progress-bar-container"><div id="progress-bar"></div></div>
+  </div>
+
+  <script>
+    let artworks = [], filteredArtworks = [];
+    let currentIndex = 0, cycleInterval, historyStack = [];
+    let cycleMode = 'random', reverseOrder = false, cycleSpeed = 5000;
+    let isPaused = false;
+
+    async function loadArtworks() {
+      const res = await fetch('bob_ross_paintings.json'); // ✅ load Bob Ross JSON
+      artworks = await res.json();
+
+      // Populate Season filter dynamically
+      const seasonSet = new Set(artworks.map(a => a.season));
+      const seasonFilter = document.getElementById('seasonFilter');
+      [...seasonSet].sort((a,b) => parseInt(a)-parseInt(b)).forEach(season => {
+        const option = document.createElement('option');
+        option.value = season; option.textContent = `Season ${season}`;
+        seasonFilter.appendChild(option);
+      });
+
+      filteredArtworks = shuffleArray([...artworks]);
+      showArtwork(); startCycle();
+    }
+
+    function showArtwork() {
+      if (!filteredArtworks.length) return;
+      const art = filteredArtworks[currentIndex];
+      const img = document.getElementById('art-image');
+      img.classList.remove('visible');
+      setTimeout(() => { img.src = art.img_src; img.onload = () => img.classList.add('visible'); }, 200);
+      
+      const total = filteredArtworks.length, pos = currentIndex + 1;
+      document.getElementById('info').textContent =
+        `${art.painting_title} (Season ${art.season}, Episode ${art.episode}) [${pos} of ${total}]`;
+      document.getElementById('progress-bar').style.width = `${(pos/total)*100}%`;
+    }
+
+    function nextArtwork() {
+      historyStack.push(currentIndex);
+      if (cycleMode === 'random') {
+        currentIndex = Math.floor(Math.random() * filteredArtworks.length);
+      } else {
+        currentIndex = reverseOrder
+          ? (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length
+          : (currentIndex + 1) % filteredArtworks.length;
+      }
+      showArtwork();
+    }
+
+    function prevArtwork() {
+      if (historyStack.length) {
+        currentIndex = historyStack.pop();
+        showArtwork();
+      }
+    }
+
+    function startCycle() {
+      if (!isPaused) {
+        clearInterval(cycleInterval);
+        cycleInterval = setInterval(nextArtwork, cycleSpeed);
+      }
+    }
+
+    function shuffleArray(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function applyFilters() {
+      const seasonVal = document.getElementById('seasonFilter').value;
+      const episodeVal = document.getElementById('episodeFilter').value.trim();
+
+      filteredArtworks = artworks.filter(a =>
+        (seasonVal === 'all' || a.season === seasonVal) &&
+        (episodeVal === '' || a.episode === episodeVal)
+      );
+
+      if (cycleMode === 'chronological') {
+        filteredArtworks.sort((a,b) => parseInt(a.sequential) - parseInt(b.sequential));
+        if (reverseOrder) filteredArtworks.reverse();
+      } else filteredArtworks = shuffleArray(filteredArtworks);
+
+      historyStack = [];
+      currentIndex = 0;
+      showArtwork();
+      startCycle();
+    }
+
+    // Event listeners for filters
+    document.getElementById('seasonFilter').addEventListener('change', applyFilters);
+    document.getElementById('episodeFilter').addEventListener('input', applyFilters);
+    document.querySelectorAll('input[name="cycleMode"]').forEach(r => {
+      r.addEventListener('change', e => {
+        cycleMode = e.target.value;
+        document.getElementById('chronologicalOptions').style.display =
+          cycleMode === 'chronological' ? 'inline-block' : 'none';
+        applyFilters();
+      });
+    });
+    document.getElementById('reverseOrder').addEventListener('change', e => {
+      reverseOrder = e.target.checked;
+      applyFilters();
+    });
+    document.getElementById('speedControl').addEventListener('change', e => {
+      cycleSpeed = parseInt(e.target.value);
+      startCycle();
+    });
+    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
+    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      isPaused = !isPaused;
+      if (isPaused) { clearInterval(cycleInterval); document.getElementById('pauseBtn').textContent = "▶️ Resume"; }
+      else { startCycle(); document.getElementById('pauseBtn').textContent = "🛑 Pause"; }
+    });
+
+    loadArtworks();
+  </script>
+</body>
+</html>
