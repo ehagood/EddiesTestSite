@@ -15,8 +15,21 @@
       overflow-x: hidden;
     }
     h1 { margin: 10px 0; transition: opacity 0.3s ease-in-out; }
-    #gallery-container { margin-top: 10px; position: relative; display: inline-block; }
-    #frame { display: inline-block; padding: 15px; border-radius: 8px; transition: all 0.4s ease-in-out; position: relative; z-index: 2; }
+
+    /* Gallery */
+    #gallery-container {
+      margin-top: 10px;
+      position: relative;
+      display: inline-block;
+    }
+    #frame {
+      display: inline-block;
+      padding: 15px;
+      border-radius: 8px;
+      transition: all 0.4s ease-in-out;
+      position: relative;
+      z-index: 2;
+    }
     #frame img {
       display: block;
       max-width: 75vw;
@@ -29,9 +42,11 @@
       transition: opacity 1s ease-in-out, transform 8s ease-in-out;
     }
     #frame img.visible { opacity: 1; transform: scale(1.05); }
-    #info { margin-top: 8px; font-size: 1.2em; transition: opacity 0.3s ease-in-out; }
 
-    /* Spotlight effect for fullscreen */
+    #info { margin-top: 8px; font-size: 1.2em; transition: opacity 0.3s ease-in-out; }
+    #colors { margin-top: 5px; font-size: 1em; color: #444; }
+
+    /* Spotlight for fullscreen */
     #spotlight {
       display: none;
       position: fixed;
@@ -44,7 +59,7 @@
       transition: opacity 0.5s ease-in-out;
     }
 
-    /* Collapsible & Auto-Hide Controls */
+    /* Controls Panel */
     #controls-panel {
       position: fixed;
       top: 0;
@@ -57,12 +72,13 @@
       transition: transform 0.3s ease-in-out;
       padding: 10px;
     }
-    #controls-panel.show { transform: translateY(0); display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }
+    #controls-panel.show { transform: translateY(0); }
 
-    /* Buttons */
-    #controls-toggle, #fullscreen-toggle {
+    /* Toggle Buttons (Controls Left / Fullscreen Right) */
+    #controls-toggle {
       position: fixed;
       top: 10px;
+      left: 10px;
       background: #d4af37;
       color: white;
       border: none;
@@ -73,8 +89,20 @@
       z-index: 1100;
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
-    #controls-toggle { left: 10px; }
-    #fullscreen-toggle { right: 10px; }
+    #fullscreen-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #d4af37;
+      color: white;
+      border: none;
+      font-size: 1.2em;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      z-index: 1100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
 
     select, input, button, label {
       font-size: 0.9em;
@@ -95,31 +123,45 @@
     /* Progress bar */
     #progress-bar-container { margin: 10px auto; width: 60%; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; transition: opacity 0.3s ease-in-out; }
     #progress-bar { width: 0%; height: 100%; background: #b8860b; transition: width 0.5s ease-in-out; }
+
     #chronologicalOptions { display: none; margin-left: 10px; }
 
-    /* Fullscreen adjustments */
-    .fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
-    .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
+    /* Fullscreen Centering */
+    .fullscreen #gallery-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .fullscreen #frame img {
+      max-width: 90vw;
+      max-height: 85vh;
+      display: block;
+      margin: 0 auto;
+    }
+    .fullscreen h1, .fullscreen #info, .fullscreen #colors, .fullscreen #progress-bar-container { opacity: 0; }
     .fullscreen #spotlight { display: block; opacity: 1; }
 
-    /* Hidden SoundCloud iframe */
-    #soundcloud-embed { display: none; }
+    /* Hidden SoundCloud Player */
+    #soundcloud-embed {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <h1>Bob Ross Gallery</h1>
-  
-  <!-- Spotlight overlay -->
+  <h1>Bob Ross Painting Gallery</h1>
   <div id="spotlight"></div>
 
-  <!-- Toggle buttons -->
+  <!-- Buttons -->
   <button id="controls-toggle">⚙️ Controls</button>
   <button id="fullscreen-toggle">⛶ Fullscreen</button>
-  
-  <!-- Controls panel -->
+
+  <!-- Controls Panel -->
   <div id="controls-panel">
-    <label for="seriesFilter">Season:</label>
-    <select id="seriesFilter"><option value="all">All</option></select>
     <label for="frameStyle">Frame:</label>
     <select id="frameStyle">
       <option value="gold">Gold</option>
@@ -141,7 +183,7 @@
     <button id="pauseBtn">🛑 Pause</button>
     <button id="musicBtn">Play 🎵</button>
   </div>
-  
+
   <!-- Gallery -->
   <div id="gallery-container">
     <button class="nav-button" id="prevBtn">&#8592; Prev</button>
@@ -150,36 +192,35 @@
     </div>
     <button class="nav-button" id="nextBtn">Next &#8594;</button>
     <div id="info"></div>
+    <div id="colors"></div>
     <div id="progress-bar-container"><div id="progress-bar"></div></div>
   </div>
 
-  <!-- Hidden SoundCloud embed -->
-  <iframe id="soundcloud-embed" width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay"
+  <!-- Hidden SoundCloud Embed -->
+  <iframe id="soundcloud-embed" width="100%" height="166" scrolling="no" frameborder="no"
+    allow="autoplay"
     src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/allenctaiwanese888999/bob-ross-intro-themethe-joy-of-painting&auto_play=false">
   </iframe>
-  <script src="https://w.soundcloud.com/player/api.js"></script>
 
+  <!-- Scripts -->
+  <script src="https://w.soundcloud.com/player/api.js"></script>
   <script>
     let artworks = [], filteredArtworks = [];
     let currentIndex = 0, cycleInterval, historyStack = [];
     let cycleMode = 'random', reverseOrder = false, cycleSpeed = 5000;
     let isPaused = false;
 
+    // SoundCloud Music Setup
+    const scIframe = document.getElementById('soundcloud-embed');
+    const scWidget = SC.Widget(scIframe);
+    let musicPlaying = false;
+
     async function loadArtworks() {
       const res = await fetch('bob_ross_paintings.json');
       artworks = await res.json();
-
-      const seasons = [...new Set(artworks.map(a => a.season))];
-      const seasonFilter = document.getElementById('seriesFilter');
-      seasons.forEach(season => {
-        const option = document.createElement('option');
-        option.value = season;
-        option.textContent = `Season ${season}`;
-        seasonFilter.appendChild(option);
-      });
-
       filteredArtworks = shuffleArray([...artworks]);
-      showArtwork(); startCycle();
+      showArtwork();
+      startCycle();
     }
 
     function showArtwork() {
@@ -187,29 +228,30 @@
       const art = filteredArtworks[currentIndex];
       const img = document.getElementById('art-image');
       img.classList.remove('visible');
-      setTimeout(() => { img.src = art.img_src; img.onload = () => img.classList.add('visible'); }, 200);
-      const total = filteredArtworks.length, pos = currentIndex + 1;
-      document.getElementById('info').textContent = `${art.painting_title} (Season ${art.season}, Episode ${art.episode}) [${pos} of ${total}]`;
-      document.getElementById('progress-bar').style.width = `${(pos/total)*100}%`;
+      setTimeout(() => {
+        img.src = art.img_src;
+        img.onload = () => img.classList.add('visible');
+      }, 200);
+      const total = filteredArtworks.length;
+      document.getElementById('info').textContent =
+        `${art.painting_title} (Season ${art.season}, Episode ${art.episode})`;
+      document.getElementById('colors').textContent =
+        `Colors: ${art.colors.join(', ')}`;
+      document.getElementById('progress-bar').style.width = `${((currentIndex+1)/total)*100}%`;
     }
 
     function nextArtwork() {
       historyStack.push(currentIndex);
-      if (cycleMode === 'random') {
-        currentIndex = Math.floor(Math.random() * filteredArtworks.length);
-      } else {
-        currentIndex = reverseOrder
-          ? (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length
-          : (currentIndex + 1) % filteredArtworks.length;
-      }
+      currentIndex = cycleMode === 'random'
+        ? Math.floor(Math.random() * filteredArtworks.length)
+        : (reverseOrder ? (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length
+                        : (currentIndex + 1) % filteredArtworks.length);
       showArtwork();
     }
 
     function prevArtwork() {
-      if (historyStack.length) {
-        currentIndex = historyStack.pop();
-        showArtwork();
-      }
+      if (historyStack.length) currentIndex = historyStack.pop();
+      showArtwork();
     }
 
     function startCycle() {
@@ -219,45 +261,41 @@
       }
     }
 
-    function shuffleArray(arr) {
-      return arr.sort(() => Math.random() - 0.5);
-    }
-
-    function applyFilters() {
-      const seasonVal = document.getElementById('seriesFilter').value;
-      filteredArtworks = artworks.filter(a =>
-        (seasonVal === 'all' || a.season === seasonVal)
-      );
-      if (cycleMode === 'chronological') {
-        filteredArtworks.sort((a, b) => parseInt(a.sequential) - parseInt(b.sequential));
-        if (reverseOrder) filteredArtworks.reverse();
-      } else filteredArtworks = shuffleArray(filteredArtworks);
-      historyStack = [];
-      currentIndex = 0;
-      showArtwork();
-      startCycle();
-    }
+    function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
 
     // Controls
-    const controlsPanel = document.getElementById('controls-panel');
-    document.getElementById('controls-toggle').addEventListener('click', () => {
-      controlsPanel.classList.toggle('show');
+    document.getElementById('controls-toggle').addEventListener('click', () =>
+      document.getElementById('controls-panel').classList.toggle('show'));
+    document.getElementById('fullscreen-toggle').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+        document.body.classList.add('fullscreen');
+      } else {
+        document.exitFullscreen();
+        document.body.classList.remove('fullscreen');
+      }
     });
 
-    document.getElementById('seriesFilter').addEventListener('change', applyFilters);
-    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
-    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
-    document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
-    document.querySelectorAll('input[name="cycleMode"]').forEach(r => {
+    document.getElementById('frameStyle').addEventListener('change', e => {
+      const frame = document.getElementById('frame');
+      frame.className = '';
+      if (e.target.value === 'gold') frame.classList.add('gold-frame');
+      else if (e.target.value === 'wood') frame.classList.add('wood-frame');
+      else frame.classList.add('no-frame');
+    });
+
+    document.querySelectorAll('input[name="cycleMode"]').forEach(r =>
       r.addEventListener('change', e => {
         cycleMode = e.target.value;
         document.getElementById('chronologicalOptions').style.display =
           cycleMode === 'chronological' ? 'inline-block' : 'none';
-        applyFilters();
-      });
+      })
+    );
+
+    document.getElementById('reverseOrder').addEventListener('change', e => reverseOrder = e.target.checked);
+    document.getElementById('speedControl').addEventListener('change', e => {
+      cycleSpeed = parseInt(e.target.value); startCycle();
     });
-    document.getElementById('reverseOrder').addEventListener('change', e => { reverseOrder = e.target.checked; applyFilters(); });
-    document.getElementById('speedControl').addEventListener('change', e => { cycleSpeed = parseInt(e.target.value); startCycle(); });
 
     document.getElementById('pauseBtn').addEventListener('click', () => {
       isPaused = !isPaused;
@@ -265,47 +303,20 @@
       else { startCycle(); document.getElementById('pauseBtn').textContent = "🛑 Pause"; }
     });
 
-    // Music button using SoundCloud widget
-    let scWidget;
-    let musicPlaying = false;
-    window.addEventListener('load', () => {
-      const scIframe = document.getElementById('soundcloud-embed');
-      if (window.SC && typeof SC.Widget === 'function') {
-        scWidget = SC.Widget(scIframe);
-      }
-    });
-
     document.getElementById('musicBtn').addEventListener('click', () => {
-      if (!scWidget) return;
       if (!musicPlaying) { scWidget.play(); musicPlaying = true; document.getElementById('musicBtn').textContent = "Pause 🎵"; }
       else { scWidget.pause(); musicPlaying = false; document.getElementById('musicBtn').textContent = "Play 🎵"; }
     });
 
-    // Fullscreen toggle
-    const fullscreenBtn = document.getElementById('fullscreen-toggle');
-    fullscreenBtn.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        document.body.classList.add('fullscreen');
-        fullscreenBtn.textContent = "⛶ Exit Fullscreen";
-      } else {
-        document.exitFullscreen();
-        document.body.classList.remove('fullscreen');
-        fullscreenBtn.textContent = "⛶ Fullscreen";
-      }
+    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
+    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight') { nextArtwork(); startCycle(); }
+      if (e.key === 'ArrowLeft') { prevArtwork(); startCycle(); }
     });
 
-    // Frame style update
-    function setFrameStyle(style) {
-      const frame = document.getElementById('frame');
-      frame.className = '';
-      if (style === 'gold') frame.classList.add('gold-frame');
-      else if (style === 'wood') frame.classList.add('wood-frame');
-      else frame.classList.add('no-frame');
-    }
-
-    // Start everything
-    setFrameStyle(document.getElementById('frameStyle').value);
+    // Start
     loadArtworks();
   </script>
 </body>
