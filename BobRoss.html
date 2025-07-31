@@ -77,29 +77,62 @@
       transition: opacity 0.5s ease-in-out;
     }
 
-    /* Controls panel and buttons */
+    /* Controls toggle and fullscreen buttons fixed on top sides */
+    #controls-toggle {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: #d4af37;
+      color: white;
+      border: none;
+      font-size: 1.2em;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      z-index: 1100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    #fullscreen-toggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #d4af37;
+      color: white;
+      border: none;
+      font-size: 1.2em;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      z-index: 1100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    /* Controls panel layout */
     #controls-panel {
       position: fixed;
-      top: 0;
-      width: 100%;
+      top: 50px; /* below the toggle buttons */
+      left: 0;
+      right: 0;
       background: rgba(255, 255, 255, 0.95);
       border-bottom: 2px solid #ccc;
       box-shadow: 0 4px 6px rgba(0,0,0,0.2);
       z-index: 1000;
-      transform: translateY(-100%);
-      transition: transform 0.3s ease-in-out;
-      padding: 10px;
+      padding: 10px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease-in-out;
     }
-    #controls-panel.show { transform: translateY(0); }
+    #controls-panel.show {
+      transform: translateY(0);
+    }
 
     #controls-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
       justify-content: flex-start;
       flex-grow: 1;
@@ -107,14 +140,14 @@
     #controls-right {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       justify-content: flex-end;
     }
 
     select, input, button, label {
       font-size: 0.9em;
       margin: 4px;
-      padding: 4px;
+      padding: 4px 8px;
     }
     .nav-button {
       font-size: 1.5em; padding: 10px 20px; margin: 15px;
@@ -141,6 +174,7 @@
       #controls-panel {
         flex-direction: column;
         align-items: stretch;
+        top: 70px;
       }
       #controls-left, #controls-right {
         justify-content: center;
@@ -155,12 +189,12 @@
   <!-- Spotlight overlay -->
   <div id="spotlight"></div>
 
-  <!-- Toggle buttons -->
-  <button id="controls-toggle">⚙️ Controls</button>
-  <button id="fullscreen-toggle">⛶ Fullscreen</button>
+  <!-- Fixed toggle buttons -->
+  <button id="controls-toggle" aria-label="Toggle controls panel">⚙️ Controls</button>
+  <button id="fullscreen-toggle" aria-label="Toggle fullscreen">⛶ Fullscreen</button>
 
   <!-- Controls panel -->
-  <div id="controls-panel">
+  <div id="controls-panel" aria-label="Gallery controls">
     <div id="controls-left">
       <label for="seasonFilter">Season:</label>
       <select id="seasonFilter"><option value="all">All</option></select>
@@ -170,20 +204,20 @@
         <option value="wood">Wood</option>
         <option value="none">None</option>
       </select>
-      <button id="pauseBtn">🛑 Pause</button>
+      <button id="pauseBtn" aria-pressed="false">🛑 Pause</button>
     </div>
     <div id="controls-right">
-      <button id="musicBtn">Play 🎵</button>
+      <button id="musicBtn" aria-pressed="false">Play 🎵</button>
     </div>
   </div>
 
   <!-- Gallery -->
   <div id="gallery-container">
-    <button class="nav-button" id="prevBtn">&#8592; Prev</button>
-    <div id="frame" class="gold-frame">
+    <button class="nav-button" id="prevBtn" aria-label="Previous painting">&#8592; Prev</button>
+    <div id="frame" class="gold-frame" aria-live="polite" aria-atomic="true">
       <img id="art-image" src="" alt="Bob Ross Painting" />
     </div>
-    <button class="nav-button" id="nextBtn">Next &#8594;</button>
+    <button class="nav-button" id="nextBtn" aria-label="Next painting">Next &#8594;</button>
     <div id="info"></div>
     <div id="colors"></div>
     <div id="progress-bar-container"><div id="progress-bar"></div></div>
@@ -209,6 +243,31 @@
     // SoundCloud widget setup
     const scIframe = document.getElementById('soundcloud-embed');
     const scWidget = SC.Widget(scIframe);
+
+    // Ensure widget ready before enabling music controls
+    scWidget.bind(SC.Widget.Events.READY, () => {
+      // Music button click
+      musicBtn.addEventListener('click', () => {
+        if (!musicPlaying) {
+          scWidget.play();
+          musicPlaying = true;
+          musicBtn.textContent = "Pause 🎵";
+          musicBtn.setAttribute('aria-pressed', 'true');
+        } else {
+          scWidget.pause();
+          musicPlaying = false;
+          musicBtn.textContent = "Play 🎵";
+          musicBtn.setAttribute('aria-pressed', 'false');
+        }
+      });
+
+      // Listen to player finish event to update button
+      scWidget.bind(SC.Widget.Events.FINISH, () => {
+        musicPlaying = false;
+        musicBtn.textContent = "Play 🎵";
+        musicBtn.setAttribute('aria-pressed', 'false');
+      });
+    });
 
     // Load Bob Ross paintings JSON file
     async function loadArtworks() {
@@ -351,22 +410,11 @@
       if (isPaused) {
         clearInterval(cycleInterval);
         document.getElementById('pauseBtn').textContent = "▶️ Resume";
+        document.getElementById('pauseBtn').setAttribute('aria-pressed', 'true');
       } else {
         startCycle();
         document.getElementById('pauseBtn').textContent = "🛑 Pause";
-      }
-    });
-
-    // Music button control
-    musicBtn.addEventListener('click', () => {
-      if (!musicPlaying) {
-        scWidget.play();
-        musicPlaying = true;
-        musicBtn.textContent = "Pause 🎵";
-      } else {
-        scWidget.pause();
-        musicPlaying = false;
-        musicBtn.textContent = "Play 🎵";
+        document.getElementById('pauseBtn').setAttribute('aria-pressed', 'false');
       }
     });
 
@@ -397,3 +445,4 @@
   </script>
 </body>
 </html>
+
