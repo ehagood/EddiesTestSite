@@ -1,448 +1,352 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bob Ross Gallery</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bob Ross Gallery</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat #fdf6e3;
+    overflow-x: hidden;
+  }
+  h1 {
+    margin: 10px 0;
+    transition: opacity 0.3s ease-in-out;
+  }
 
-  <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAC4b6kXAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAV0lEQVR4nO3MMQEAAAgDINc/9K3hBFQZFA4YyUYIuEDuRGzGZCmZCWYkmZCWYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TymX0FQ12RpkEAAAAASUVORK5CYII=" />
+  /* Controls panel */
+  #controls-panel {
+    position: fixed;
+    top: 50px;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom: 2px solid #ccc;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    z-index: 1000;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  #controls-panel.show {
+    transform: translateY(0);
+  }
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-      background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat #fdf6e3;
-      overflow-x: hidden;
-    }
-    h1 { margin: 10px 0; transition: opacity 0.3s ease-in-out; }
-    #gallery-container { margin-top: 10px; position: relative; display: inline-block; }
-    #frame { display: inline-block; padding: 15px; border-radius: 8px; transition: all 0.4s ease-in-out; position: relative; z-index: 2; }
-    #frame img {
-      display: block;
-      max-width: 75vw;
-      max-height: 70vh;
-      border: 4px solid #fff;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
-      background-color: #fff;
-      opacity: 0;
-      transform: scale(1);
-      transition: opacity 1s ease-in-out, transform 8s ease-in-out;
-      margin: 0 auto;
-    }
-    #frame img.visible { opacity: 1; transform: scale(1.05); }
-    #info { margin-top: 8px; font-size: 1.2em; transition: opacity 0.3s ease-in-out; }
-    #colors {
-      margin-top: 8px;
-      font-size: 1em;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      max-width: 75vw;
-      margin-left: auto;
-      margin-right: auto;
-    }
+  /* Buttons */
+  #controls-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: #d4af37;
+    color: white;
+    border: none;
+    font-size: 1.2em;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    z-index: 1100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+  #fullscreen-toggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #d4af37;
+    color: white;
+    border: none;
+    font-size: 1.2em;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    z-index: 1100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+  #musicBtn {
+    background: #d4af37;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    font-size: 1em;
+    cursor: pointer;
+    border-radius: 6px;
+  }
 
-    /* Color swatch boxes */
-    #colors span {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      background-color: #fff;
-      font-size: 0.9em;
-      user-select: none;
-    }
-    #colors span span {
-      width: 16px;
-      height: 16px;
-      border: 1px solid #000;
-      display: inline-block;
-    }
+  /* Gallery container */
+  #gallery-container {
+    margin-top: 110px;
+    position: relative;
+    display: inline-block;
+    width: 80vw;
+    max-width: 900px;
+  }
+  #frame {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    border-radius: 8px;
+    transition: all 0.4s ease-in-out;
+    position: relative;
+    z-index: 2;
+    background: white;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
+  }
+  #frame img {
+    max-width: 75vw;
+    max-height: 70vh;
+    border: 4px solid #fff;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
+    background-color: #fff;
+    opacity: 0;
+    transform: scale(1);
+    transition: opacity 1s ease-in-out, transform 8s ease-in-out;
+  }
+  #frame img.visible {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 
-    /* Spotlight effect for fullscreen */
-    #spotlight {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.8) 100%);
-      pointer-events: none;
-      z-index: 1;
-      transition: opacity 0.5s ease-in-out;
-    }
+  /* Center image in fullscreen */
+  .fullscreen #gallery-container {
+    width: 90vw;
+    max-width: none;
+    margin-top: 50vh;
+    transform: translateY(-50%);
+  }
+  .fullscreen #frame {
+    justify-content: center;
+    align-items: center;
+  }
+  .fullscreen #frame img {
+    max-width: 90vw;
+    max-height: 85vh;
+  }
 
-    /* Controls toggle and fullscreen buttons fixed on top sides */
-    #controls-toggle {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: #d4af37;
-      color: white;
-      border: none;
-      font-size: 1.2em;
-      padding: 8px 14px;
-      cursor: pointer;
-      border-radius: 6px;
-      z-index: 1100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-    }
-    #fullscreen-toggle {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #d4af37;
-      color: white;
-      border: none;
-      font-size: 1.2em;
-      padding: 8px 14px;
-      cursor: pointer;
-      border-radius: 6px;
-      z-index: 1100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-    }
+  /* Info and nav buttons */
+  #info {
+    margin-top: 8px;
+    font-size: 1.2em;
+    transition: opacity 0.3s ease-in-out;
+  }
+  .nav-button {
+    font-size: 1.5em;
+    padding: 10px 20px;
+    margin: 15px;
+    background-color: #eee;
+    border: 2px solid #444;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .nav-button:hover {
+    background-color: #ddd;
+  }
 
-    /* Controls panel layout */
-    #controls-panel {
-      position: fixed;
-      top: 50px; /* below the toggle buttons */
-      left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.95);
-      border-bottom: 2px solid #ccc;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      z-index: 1000;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      transform: translateY(-100%);
-      transition: transform 0.3s ease-in-out;
-    }
-    #controls-panel.show {
-      transform: translateY(0);
-    }
+  /* Spotlight overlay */
+  #spotlight {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.8) 100%);
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.5s ease-in-out;
+  }
+  .fullscreen #spotlight {
+    display: block;
+    opacity: 1;
+  }
 
-    #controls-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-      flex-grow: 1;
-    }
-    #controls-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      justify-content: flex-end;
-    }
-
-    select, input, button, label {
-      font-size: 0.9em;
-      margin: 4px;
-      padding: 4px 8px;
-    }
-    .nav-button {
-      font-size: 1.5em; padding: 10px 20px; margin: 15px;
-      background-color: #eee; border: 2px solid #444; border-radius: 6px; cursor: pointer;
-    }
-    .nav-button:hover { background-color: #ddd; }
-
-    /* Frame styles */
-    .gold-frame { background: linear-gradient(145deg, #d4af37, #b8860b); border: 8px solid #8b6f47; box-shadow: 0 0 0 6px #e0c97f, 0 8px 15px rgba(0,0,0,0.6); }
-    .wood-frame { background: linear-gradient(145deg, #4b2e14, #3b1f0e); border: 8px solid #2a1407; box-shadow: 0 0 0 6px #6e4b2f, 0 8px 15px rgba(0,0,0,0.6); }
-    .no-frame { background: none; border: none; box-shadow: none; padding: 0; }
-
-    /* Progress bar */
-    #progress-bar-container { margin: 10px auto; width: 60%; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; transition: opacity 0.3s ease-in-out; }
-    #progress-bar { width: 0%; height: 100%; background: #b8860b; transition: width 0.5s ease-in-out; }
-
-    /* Fullscreen adjustments */
-    .fullscreen #frame img { max-width: 90vw; max-height: 85vh; display: block; margin-left: auto; margin-right: auto; }
-    .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
-    .fullscreen #spotlight { display: block; opacity: 1; }
-
-    /* Responsive */
-    @media (max-width: 600px) {
-      #controls-panel {
-        flex-direction: column;
-        align-items: stretch;
-        top: 70px;
-      }
-      #controls-left, #controls-right {
-        justify-content: center;
-        margin: 4px 0;
-      }
-    }
-  </style>
+</style>
 </head>
 <body>
-  <h1>Bob Ross Gallery</h1>
 
-  <!-- Spotlight overlay -->
-  <div id="spotlight"></div>
+<h1>Bob Ross Gallery</h1>
 
-  <!-- Fixed toggle buttons -->
-  <button id="controls-toggle" aria-label="Toggle controls panel">⚙️ Controls</button>
-  <button id="fullscreen-toggle" aria-label="Toggle fullscreen">⛶ Fullscreen</button>
+<!-- Spotlight overlay -->
+<div id="spotlight"></div>
 
-  <!-- Controls panel -->
-  <div id="controls-panel" aria-label="Gallery controls">
-    <div id="controls-left">
-      <label for="seasonFilter">Season:</label>
-      <select id="seasonFilter"><option value="all">All</option></select>
-      <label for="frameStyle">Frame:</label>
-      <select id="frameStyle">
-        <option value="gold">Gold</option>
-        <option value="wood">Wood</option>
-        <option value="none">None</option>
-      </select>
-      <button id="pauseBtn" aria-pressed="false">🛑 Pause</button>
-    </div>
-    <div id="controls-right">
-      <button id="musicBtn" aria-pressed="false">Play 🎵</button>
-    </div>
+<!-- Toggle buttons -->
+<button id="controls-toggle" aria-label="Toggle controls">⚙️ Controls</button>
+<button id="fullscreen-toggle" aria-label="Toggle fullscreen">⛶ Fullscreen</button>
+
+<!-- Controls panel -->
+<div id="controls-panel" role="region" aria-label="Gallery controls">
+  <div>
+    <!-- Add other controls here if needed -->
+    <label for="speedControl">Speed:</label>
+    <select id="speedControl">
+      <option value="5000" selected>5s</option>
+      <option value="10000">10s</option>
+      <option value="15000">15s</option>
+    </select>
   </div>
+  <button id="musicBtn" aria-pressed="false">Play 🎵</button>
+</div>
 
-  <!-- Gallery -->
-  <div id="gallery-container">
-    <button class="nav-button" id="prevBtn" aria-label="Previous painting">&#8592; Prev</button>
-    <div id="frame" class="gold-frame" aria-live="polite" aria-atomic="true">
-      <img id="art-image" src="" alt="Bob Ross Painting" />
-    </div>
-    <button class="nav-button" id="nextBtn" aria-label="Next painting">Next &#8594;</button>
-    <div id="info"></div>
-    <div id="colors"></div>
-    <div id="progress-bar-container"><div id="progress-bar"></div></div>
+<!-- Gallery -->
+<div id="gallery-container">
+  <button class="nav-button" id="prevBtn">&#8592; Prev</button>
+  <div id="frame">
+    <img id="art-image" src="" alt="Bob Ross Painting" />
   </div>
+  <button class="nav-button" id="nextBtn">Next &#8594;</button>
+  <div id="info"></div>
+</div>
 
-  <!-- SoundCloud Embed (hidden) -->
-  <iframe
-    id="soundcloud-embed"
-    src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/176269722&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&visual=false"
-    style="display:none;"
-    allow="autoplay"
-  ></iframe>
+<!-- SoundCloud iframe, hidden but needed for widget API -->
+<iframe
+  id="soundcloud-embed"
+  style="display:none;"
+  allow="autoplay"
+  src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/176269722&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&visual=false&enable_api=true"
+></iframe>
 
-  <script src="https://w.soundcloud.com/player/api.js"></script>
+<script src="https://w.soundcloud.com/player/api.js"></script>
 
-  <script>
-    let artworks = [], filteredArtworks = [];
-    let currentIndex = 0, cycleInterval, historyStack = [];
-    let isPaused = false;
-    let musicPlaying = false;
-    const musicBtn = document.getElementById('musicBtn');
+<script>
+  let artworks = [], filteredArtworks = [];
+  let currentIndex = 0, cycleInterval, historyStack = [];
+  let cycleSpeed = 5000;
+  let isPaused = false;
+  
+  // DOM references
+  const imgEl = document.getElementById('art-image');
+  const infoEl = document.getElementById('info');
+  const controlsToggle = document.getElementById('controls-toggle');
+  const controlsPanel = document.getElementById('controls-panel');
+  const fullscreenToggle = document.getElementById('fullscreen-toggle');
+  const musicBtn = document.getElementById('musicBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const speedControl = document.getElementById('speedControl');
+  const spotlight = document.getElementById('spotlight');
+  
+  // SoundCloud setup
+  const scIframe = document.getElementById('soundcloud-embed');
+  const scWidget = SC.Widget(scIframe);
+  let musicPlaying = false;
 
-    // SoundCloud widget setup
-    const scIframe = document.getElementById('soundcloud-embed');
-    const scWidget = SC.Widget(scIframe);
+  // Load artwork data
+  async function loadArtworks() {
+    const res = await fetch('bob_ross_paintings.JSON');
+    artworks = await res.json();
+    filteredArtworks = [...artworks];
+    showArtwork();
+    startCycle();
+  }
 
-    // Ensure widget ready before enabling music controls
-    scWidget.bind(SC.Widget.Events.READY, () => {
-      // Music button click
-      musicBtn.addEventListener('click', () => {
-        if (!musicPlaying) {
-          scWidget.play();
-          musicPlaying = true;
-          musicBtn.textContent = "Pause 🎵";
-          musicBtn.setAttribute('aria-pressed', 'true');
-        } else {
-          scWidget.pause();
-          musicPlaying = false;
-          musicBtn.textContent = "Play 🎵";
-          musicBtn.setAttribute('aria-pressed', 'false');
-        }
-      });
+  function showArtwork() {
+    if (!filteredArtworks.length) return;
+    const art = filteredArtworks[currentIndex];
 
-      // Listen to player finish event to update button
-      scWidget.bind(SC.Widget.Events.FINISH, () => {
-        musicPlaying = false;
-        musicBtn.textContent = "Play 🎵";
-        musicBtn.setAttribute('aria-pressed', 'false');
-      });
-    });
+    // Update image
+    imgEl.classList.remove('visible');
+    setTimeout(() => {
+      imgEl.src = art.img_src;
+      imgEl.alt = art.painting_title;
+      imgEl.onload = () => imgEl.classList.add('visible');
+    }, 200);
 
-    // Load Bob Ross paintings JSON file
-    async function loadArtworks() {
-      const res = await fetch('bob_ross_paintings.json');
-      artworks = await res.json();
+    // Update info with colors
+    let colorsHTML = art.colors.map((color, i) => 
+      `<span style="display:inline-block; width: 18px; height: 18px; background: ${art.color_hex[i]}; border: 1px solid #333; margin-right: 4px; vertical-align: middle; border-radius: 3px;"></span>${color}`
+    ).join(' &nbsp; ');
 
-      // Populate season filter dynamically
-      const seasonSet = new Set(artworks.map(a => a.season));
-      const seasonFilter = document.getElementById('seasonFilter');
-      seasonSet.forEach(season => {
-        const option = document.createElement('option');
-        option.value = season;
-        option.textContent = "Season " + season;
-        seasonFilter.appendChild(option);
-      });
+    infoEl.innerHTML = `<strong>${art.painting_title}</strong> (Season ${art.season}, Episode ${art.episode})<br>Colors: ${colorsHTML}`;
+  }
 
-      filteredArtworks = [...artworks]; // initially all
-      showArtwork();
-      startCycle();
-    }
+  function nextArtwork() {
+    historyStack.push(currentIndex);
+    currentIndex = (currentIndex + 1) % filteredArtworks.length;
+    showArtwork();
+  }
 
-    function showArtwork() {
-      if (!filteredArtworks.length) return;
-      const art = filteredArtworks[currentIndex];
-      const img = document.getElementById('art-image');
-      img.classList.remove('visible');
-      setTimeout(() => {
-        img.src = art.img_src;
-        img.alt = art.painting_title;
-        img.onload = () => img.classList.add('visible');
-      }, 200);
-
-      const total = filteredArtworks.length;
-      document.getElementById('info').textContent =
-        `${art.painting_title} (Season ${art.season}, Episode ${art.episode})`;
-
-      // Render color swatches side-by-side
-      const colorsDiv = document.getElementById('colors');
-      colorsDiv.innerHTML = ''; // clear before adding
-
-      art.colors.forEach((color, i) => {
-        const hex = art.color_hex[i];
-        const colorSpan = document.createElement('span');
-        colorSpan.title = color;
-        colorSpan.style.display = 'flex';
-        colorSpan.style.alignItems = 'center';
-        colorSpan.style.gap = '6px';
-        colorSpan.style.padding = '4px 8px';
-        colorSpan.style.border = '1px solid #ccc';
-        colorSpan.style.borderRadius = '6px';
-        colorSpan.style.backgroundColor = '#fff';
-        colorSpan.style.fontSize = '0.9em';
-        colorSpan.style.userSelect = 'none';
-
-        const swatch = document.createElement('span');
-        swatch.style.width = '16px';
-        swatch.style.height = '16px';
-        swatch.style.backgroundColor = hex;
-        swatch.style.border = '1px solid #000';
-        swatch.style.display = 'inline-block';
-
-        colorSpan.appendChild(swatch);
-        colorSpan.appendChild(document.createTextNode(color));
-
-        colorsDiv.appendChild(colorSpan);
-      });
-
-      document.getElementById('progress-bar').style.width = `${((currentIndex+1)/total)*100}%`;
-    }
-
-    function nextArtwork() {
-      historyStack.push(currentIndex);
-      currentIndex = (currentIndex + 1) % filteredArtworks.length;
+  function prevArtwork() {
+    if (historyStack.length) {
+      currentIndex = historyStack.pop();
       showArtwork();
     }
+  }
 
-    function prevArtwork() {
-      if (historyStack.length) {
-        currentIndex = historyStack.pop();
-        showArtwork();
-      }
+  function startCycle() {
+    if (!isPaused) {
+      clearInterval(cycleInterval);
+      cycleInterval = setInterval(nextArtwork, cycleSpeed);
     }
+  }
 
-    function startCycle() {
-      if (!isPaused) {
-        clearInterval(cycleInterval);
-        cycleInterval = setInterval(nextArtwork, 7000);
-      }
+  // Event listeners
+  controlsToggle.addEventListener('click', () => {
+    controlsPanel.classList.toggle('show');
+  });
+
+  fullscreenToggle.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      document.body.classList.add('fullscreen');
+      spotlight.style.display = 'block';
+      fullscreenToggle.textContent = '⛶ Exit Fullscreen';
+    } else {
+      document.exitFullscreen();
+      document.body.classList.remove('fullscreen');
+      spotlight.style.display = 'none';
+      fullscreenToggle.textContent = '⛶ Fullscreen';
     }
+  });
 
-    // Filters
-    document.getElementById('seasonFilter').addEventListener('change', e => {
-      const val = e.target.value;
-      filteredArtworks = val === 'all'
-        ? [...artworks]
-        : artworks.filter(a => a.season === val);
-      historyStack = [];
-      currentIndex = 0;
-      showArtwork();
-      startCycle();
-    });
-
-    // Frame style
-    function setFrameStyle(style) {
-      const frame = document.getElementById('frame');
-      frame.className = '';
-      if (style === 'gold') frame.classList.add('gold-frame');
-      else if (style === 'wood') frame.classList.add('wood-frame');
-      else frame.classList.add('no-frame');
+  musicBtn.addEventListener('click', () => {
+    if (!musicPlaying) {
+      scWidget.play();
+    } else {
+      scWidget.pause();
     }
-    document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
-    setFrameStyle(document.getElementById('frameStyle').value);
+  });
 
-    // Controls toggle
-    const controlsPanel = document.getElementById('controls-panel');
-    document.getElementById('controls-toggle').addEventListener('click', () => {
-      controlsPanel.classList.toggle('show');
+  scWidget.bind(SC.Widget.Events.READY, () => {
+    scWidget.bind(SC.Widget.Events.PLAY, () => {
+      musicPlaying = true;
+      musicBtn.textContent = 'Pause 🎵';
+      musicBtn.setAttribute('aria-pressed', 'true');
     });
+    scWidget.bind(SC.Widget.Events.PAUSE, () => {
+      musicPlaying = false;
+      musicBtn.textContent = 'Play 🎵';
+      musicBtn.setAttribute('aria-pressed', 'false');
+    });
+    scWidget.bind(SC.Widget.Events.FINISH, () => {
+      musicPlaying = false;
+      musicBtn.textContent = 'Play 🎵';
+      musicBtn.setAttribute('aria-pressed', 'false');
+    });
+  });
 
-    // Fullscreen toggle & spotlight
-    const fullscreenBtn = document.getElementById('fullscreen-toggle');
-    const spotlight = document.getElementById('spotlight');
-    fullscreenBtn.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        document.body.classList.add('fullscreen');
-        spotlight.style.display = "block";
-        fullscreenBtn.textContent = "⛶ Exit Fullscreen";
-      } else {
-        document.exitFullscreen();
-        document.body.classList.remove('fullscreen');
-        spotlight.style.display = "none";
-        fullscreenBtn.textContent = "⛶ Fullscreen";
-      }
-    });
+  prevBtn.addEventListener('click', () => {
+    prevArtwork();
+    startCycle();
+  });
 
-    // Pause button
-    document.getElementById('pauseBtn').addEventListener('click', () => {
-      isPaused = !isPaused;
-      if (isPaused) {
-        clearInterval(cycleInterval);
-        document.getElementById('pauseBtn').textContent = "▶️ Resume";
-        document.getElementById('pauseBtn').setAttribute('aria-pressed', 'true');
-      } else {
-        startCycle();
-        document.getElementById('pauseBtn').textContent = "🛑 Pause";
-        document.getElementById('pauseBtn').setAttribute('aria-pressed', 'false');
-      }
-    });
+  nextBtn.addEventListener('click', () => {
+    nextArtwork();
+    startCycle();
+  });
 
-    // Navigation buttons
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      nextArtwork();
-      startCycle();
-    });
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      prevArtwork();
-      startCycle();
-    });
+  speedControl.addEventListener('change', (e) => {
+    cycleSpeed = parseInt(e.target.value);
+    startCycle();
+  });
 
-    // Keyboard navigation
-    document.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight') {
-        nextArtwork();
-        startCycle();
-      }
-      if (e.key === 'ArrowLeft') {
-        prevArtwork();
-        startCycle();
-      }
-    });
+  // Start app
+  loadArtworks();
+</script>
 
-    // Initialize
-    loadArtworks();
-  </script>
 </body>
 </html>
-
