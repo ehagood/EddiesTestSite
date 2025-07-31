@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bob Ross Gallery</title>
 
+  <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAC4b6kXAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAV0lEQVR4nO3MMQEAAAgDINc/9K3hBFQZFA4YyUYIuEDuRGzGZCmZCWYkmZCWYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TYk2TymX0FQ12RpkEAAAAASUVORK5CYII=" />
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -15,21 +17,8 @@
       overflow-x: hidden;
     }
     h1 { margin: 10px 0; transition: opacity 0.3s ease-in-out; }
-
-    /* Gallery */
-    #gallery-container {
-      margin-top: 10px;
-      position: relative;
-      display: inline-block;
-    }
-    #frame {
-      display: inline-block;
-      padding: 15px;
-      border-radius: 8px;
-      transition: all 0.4s ease-in-out;
-      position: relative;
-      z-index: 2;
-    }
+    #gallery-container { margin-top: 10px; position: relative; display: inline-block; }
+    #frame { display: inline-block; padding: 15px; border-radius: 8px; transition: all 0.4s ease-in-out; position: relative; z-index: 2; }
     #frame img {
       display: block;
       max-width: 75vw;
@@ -40,13 +29,42 @@
       opacity: 0;
       transform: scale(1);
       transition: opacity 1s ease-in-out, transform 8s ease-in-out;
+      margin: 0 auto;
     }
     #frame img.visible { opacity: 1; transform: scale(1.05); }
-
     #info { margin-top: 8px; font-size: 1.2em; transition: opacity 0.3s ease-in-out; }
-    #colors { margin-top: 5px; font-size: 1em; color: #444; }
+    #colors {
+      margin-top: 8px;
+      font-size: 1em;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      max-width: 75vw;
+      margin-left: auto;
+      margin-right: auto;
+    }
 
-    /* Spotlight for fullscreen */
+    /* Color swatch boxes */
+    #colors span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: #fff;
+      font-size: 0.9em;
+      user-select: none;
+    }
+    #colors span span {
+      width: 16px;
+      height: 16px;
+      border: 1px solid #000;
+      display: inline-block;
+    }
+
+    /* Spotlight effect for fullscreen */
     #spotlight {
       display: none;
       position: fixed;
@@ -59,7 +77,7 @@
       transition: opacity 0.5s ease-in-out;
     }
 
-    /* Controls Panel */
+    /* Controls panel and buttons */
     #controls-panel {
       position: fixed;
       top: 0;
@@ -71,37 +89,26 @@
       transform: translateY(-100%);
       transition: transform 0.3s ease-in-out;
       padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
     }
     #controls-panel.show { transform: translateY(0); }
 
-    /* Toggle Buttons (Controls Left / Fullscreen Right) */
-    #controls-toggle {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: #d4af37;
-      color: white;
-      border: none;
-      font-size: 1.2em;
-      padding: 8px 14px;
-      cursor: pointer;
-      border-radius: 6px;
-      z-index: 1100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    #controls-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      flex-grow: 1;
     }
-    #fullscreen-toggle {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #d4af37;
-      color: white;
-      border: none;
-      font-size: 1.2em;
-      padding: 8px 14px;
-      cursor: pointer;
-      border-radius: 6px;
-      z-index: 1100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    #controls-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: flex-end;
     }
 
     select, input, button, label {
@@ -124,64 +131,50 @@
     #progress-bar-container { margin: 10px auto; width: 60%; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; transition: opacity 0.3s ease-in-out; }
     #progress-bar { width: 0%; height: 100%; background: #b8860b; transition: width 0.5s ease-in-out; }
 
-    #chronologicalOptions { display: none; margin-left: 10px; }
-
-    /* Fullscreen Centering */
-    .fullscreen #gallery-container {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .fullscreen #frame img {
-      max-width: 90vw;
-      max-height: 85vh;
-      display: block;
-      margin: 0 auto;
-    }
-    .fullscreen h1, .fullscreen #info, .fullscreen #colors, .fullscreen #progress-bar-container { opacity: 0; }
+    /* Fullscreen adjustments */
+    .fullscreen #frame img { max-width: 90vw; max-height: 85vh; display: block; margin-left: auto; margin-right: auto; }
+    .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
     .fullscreen #spotlight { display: block; opacity: 1; }
 
-    /* Hidden SoundCloud Player */
-    #soundcloud-embed {
-      display: none;
+    /* Responsive */
+    @media (max-width: 600px) {
+      #controls-panel {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      #controls-left, #controls-right {
+        justify-content: center;
+        margin: 4px 0;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Bob Ross Painting Gallery</h1>
+  <h1>Bob Ross Gallery</h1>
+
+  <!-- Spotlight overlay -->
   <div id="spotlight"></div>
 
-  <!-- Buttons -->
+  <!-- Toggle buttons -->
   <button id="controls-toggle">⚙️ Controls</button>
   <button id="fullscreen-toggle">⛶ Fullscreen</button>
 
-  <!-- Controls Panel -->
+  <!-- Controls panel -->
   <div id="controls-panel">
-    <label for="frameStyle">Frame:</label>
-    <select id="frameStyle">
-      <option value="gold">Gold</option>
-      <option value="wood">Wood</option>
-      <option value="none">None</option>
-    </select>
-    <label>Mode:</label>
-    <label><input type="radio" name="cycleMode" value="random" checked> Random</label>
-    <label><input type="radio" name="cycleMode" value="chronological"> Chronological</label>
-    <span id="chronologicalOptions">
-      <label><input type="checkbox" id="reverseOrder"> Reverse</label>
-    </span>
-    <label for="speedControl">Speed:</label>
-    <select id="speedControl">
-      <option value="5000" selected>5s</option>
-      <option value="10000">10s</option>
-      <option value="15000">15s</option>
-    </select>
-    <button id="pauseBtn">🛑 Pause</button>
-    <button id="musicBtn">Play 🎵</button>
+    <div id="controls-left">
+      <label for="seasonFilter">Season:</label>
+      <select id="seasonFilter"><option value="all">All</option></select>
+      <label for="frameStyle">Frame:</label>
+      <select id="frameStyle">
+        <option value="gold">Gold</option>
+        <option value="wood">Wood</option>
+        <option value="none">None</option>
+      </select>
+      <button id="pauseBtn">🛑 Pause</button>
+    </div>
+    <div id="controls-right">
+      <button id="musicBtn">Play 🎵</button>
+    </div>
   </div>
 
   <!-- Gallery -->
@@ -195,148 +188,211 @@
     <div id="colors"></div>
     <div id="progress-bar-container"><div id="progress-bar"></div></div>
   </div>
-  <div id="colors"></div>
 
-  <!-- Hidden SoundCloud Embed -->
-  <iframe id="soundcloud-embed" width="100%" height="166" scrolling="no" frameborder="no"
+  <!-- SoundCloud Embed (hidden) -->
+  <iframe
+    id="soundcloud-embed"
+    src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/176269722&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&visual=false"
+    style="display:none;"
     allow="autoplay"
-    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/allenctaiwanese888999/bob-ross-intro-themethe-joy-of-painting&auto_play=false">
-  </iframe>
+  ></iframe>
 
-  <!-- Scripts -->
   <script src="https://w.soundcloud.com/player/api.js"></script>
+
   <script>
     let artworks = [], filteredArtworks = [];
     let currentIndex = 0, cycleInterval, historyStack = [];
-    let cycleMode = 'random', reverseOrder = false, cycleSpeed = 5000;
     let isPaused = false;
+    let musicPlaying = false;
+    const musicBtn = document.getElementById('musicBtn');
 
-    // SoundCloud Music Setup
+    // SoundCloud widget setup
     const scIframe = document.getElementById('soundcloud-embed');
     const scWidget = SC.Widget(scIframe);
-    let musicPlaying = false;
 
+    // Load Bob Ross paintings JSON file
     async function loadArtworks() {
       const res = await fetch('bob_ross_paintings.json');
       artworks = await res.json();
-      filteredArtworks = shuffleArray([...artworks]);
+
+      // Populate season filter dynamically
+      const seasonSet = new Set(artworks.map(a => a.season));
+      const seasonFilter = document.getElementById('seasonFilter');
+      seasonSet.forEach(season => {
+        const option = document.createElement('option');
+        option.value = season;
+        option.textContent = "Season " + season;
+        seasonFilter.appendChild(option);
+      });
+
+      filteredArtworks = [...artworks]; // initially all
       showArtwork();
       startCycle();
     }
 
     function showArtwork() {
-  if (!filteredArtworks.length) return;
-  const art = filteredArtworks[currentIndex];
-  const img = document.getElementById('art-image');
-  img.classList.remove('visible');
-  setTimeout(() => {
-    img.src = art.img_src;
-    img.onload = () => img.classList.add('visible');
-  }, 200);
+      if (!filteredArtworks.length) return;
+      const art = filteredArtworks[currentIndex];
+      const img = document.getElementById('art-image');
+      img.classList.remove('visible');
+      setTimeout(() => {
+        img.src = art.img_src;
+        img.alt = art.painting_title;
+        img.onload = () => img.classList.add('visible');
+      }, 200);
 
-  const total = filteredArtworks.length;
-  document.getElementById('info').textContent =
-    `${art.painting_title} (Season ${art.season}, Episode ${art.episode})`;
+      const total = filteredArtworks.length;
+      document.getElementById('info').textContent =
+        `${art.painting_title} (Season ${art.season}, Episode ${art.episode})`;
 
-  // Render color swatches
-  const colorsDiv = document.getElementById('colors');
-  colorsDiv.innerHTML = "Colors:<br>";
-  art.colors.forEach((color, i) => {
-    const hex = art.color_hex[i];
-    const swatch = `<span style="
-        display:inline-block;
-        width:16px; height:16px;
-        background:${hex};
-        border:1px solid #000;
-        margin-right:5px;
-        vertical-align:middle;"></span>`;
-    colorsDiv.innerHTML += `${swatch} ${color}<br>`;
-  });
+      // Render color swatches side-by-side
+      const colorsDiv = document.getElementById('colors');
+      colorsDiv.innerHTML = ''; // clear before adding
 
-  document.getElementById('progress-bar').style.width =
-    `${((currentIndex+1)/total)*100}%`;
-}
+      art.colors.forEach((color, i) => {
+        const hex = art.color_hex[i];
+        const colorSpan = document.createElement('span');
+        colorSpan.title = color;
+        colorSpan.style.display = 'flex';
+        colorSpan.style.alignItems = 'center';
+        colorSpan.style.gap = '6px';
+        colorSpan.style.padding = '4px 8px';
+        colorSpan.style.border = '1px solid #ccc';
+        colorSpan.style.borderRadius = '6px';
+        colorSpan.style.backgroundColor = '#fff';
+        colorSpan.style.fontSize = '0.9em';
+        colorSpan.style.userSelect = 'none';
 
+        const swatch = document.createElement('span');
+        swatch.style.width = '16px';
+        swatch.style.height = '16px';
+        swatch.style.backgroundColor = hex;
+        swatch.style.border = '1px solid #000';
+        swatch.style.display = 'inline-block';
 
+        colorSpan.appendChild(swatch);
+        colorSpan.appendChild(document.createTextNode(color));
 
+        colorsDiv.appendChild(colorSpan);
+      });
+
+      document.getElementById('progress-bar').style.width = `${((currentIndex+1)/total)*100}%`;
+    }
 
     function nextArtwork() {
       historyStack.push(currentIndex);
-      currentIndex = cycleMode === 'random'
-        ? Math.floor(Math.random() * filteredArtworks.length)
-        : (reverseOrder ? (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length
-                        : (currentIndex + 1) % filteredArtworks.length);
+      currentIndex = (currentIndex + 1) % filteredArtworks.length;
       showArtwork();
     }
 
     function prevArtwork() {
-      if (historyStack.length) currentIndex = historyStack.pop();
-      showArtwork();
+      if (historyStack.length) {
+        currentIndex = historyStack.pop();
+        showArtwork();
+      }
     }
 
     function startCycle() {
       if (!isPaused) {
         clearInterval(cycleInterval);
-        cycleInterval = setInterval(nextArtwork, cycleSpeed);
+        cycleInterval = setInterval(nextArtwork, 7000);
       }
     }
 
-    function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
+    // Filters
+    document.getElementById('seasonFilter').addEventListener('change', e => {
+      const val = e.target.value;
+      filteredArtworks = val === 'all'
+        ? [...artworks]
+        : artworks.filter(a => a.season === val);
+      historyStack = [];
+      currentIndex = 0;
+      showArtwork();
+      startCycle();
+    });
 
-    // Controls
-    document.getElementById('controls-toggle').addEventListener('click', () =>
-      document.getElementById('controls-panel').classList.toggle('show'));
-    document.getElementById('fullscreen-toggle').addEventListener('click', () => {
+    // Frame style
+    function setFrameStyle(style) {
+      const frame = document.getElementById('frame');
+      frame.className = '';
+      if (style === 'gold') frame.classList.add('gold-frame');
+      else if (style === 'wood') frame.classList.add('wood-frame');
+      else frame.classList.add('no-frame');
+    }
+    document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
+    setFrameStyle(document.getElementById('frameStyle').value);
+
+    // Controls toggle
+    const controlsPanel = document.getElementById('controls-panel');
+    document.getElementById('controls-toggle').addEventListener('click', () => {
+      controlsPanel.classList.toggle('show');
+    });
+
+    // Fullscreen toggle & spotlight
+    const fullscreenBtn = document.getElementById('fullscreen-toggle');
+    const spotlight = document.getElementById('spotlight');
+    fullscreenBtn.addEventListener('click', () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
         document.body.classList.add('fullscreen');
+        spotlight.style.display = "block";
+        fullscreenBtn.textContent = "⛶ Exit Fullscreen";
       } else {
         document.exitFullscreen();
         document.body.classList.remove('fullscreen');
+        spotlight.style.display = "none";
+        fullscreenBtn.textContent = "⛶ Fullscreen";
       }
     });
 
-    document.getElementById('frameStyle').addEventListener('change', e => {
-      const frame = document.getElementById('frame');
-      frame.className = '';
-      if (e.target.value === 'gold') frame.classList.add('gold-frame');
-      else if (e.target.value === 'wood') frame.classList.add('wood-frame');
-      else frame.classList.add('no-frame');
-    });
-
-    document.querySelectorAll('input[name="cycleMode"]').forEach(r =>
-      r.addEventListener('change', e => {
-        cycleMode = e.target.value;
-        document.getElementById('chronologicalOptions').style.display =
-          cycleMode === 'chronological' ? 'inline-block' : 'none';
-      })
-    );
-
-    document.getElementById('reverseOrder').addEventListener('change', e => reverseOrder = e.target.checked);
-    document.getElementById('speedControl').addEventListener('change', e => {
-      cycleSpeed = parseInt(e.target.value); startCycle();
-    });
-
+    // Pause button
     document.getElementById('pauseBtn').addEventListener('click', () => {
       isPaused = !isPaused;
-      if (isPaused) { clearInterval(cycleInterval); document.getElementById('pauseBtn').textContent = "▶️ Resume"; }
-      else { startCycle(); document.getElementById('pauseBtn').textContent = "🛑 Pause"; }
+      if (isPaused) {
+        clearInterval(cycleInterval);
+        document.getElementById('pauseBtn').textContent = "▶️ Resume";
+      } else {
+        startCycle();
+        document.getElementById('pauseBtn').textContent = "🛑 Pause";
+      }
     });
 
-    document.getElementById('musicBtn').addEventListener('click', () => {
-      if (!musicPlaying) { scWidget.play(); musicPlaying = true; document.getElementById('musicBtn').textContent = "Pause 🎵"; }
-      else { scWidget.pause(); musicPlaying = false; document.getElementById('musicBtn').textContent = "Play 🎵"; }
+    // Music button control
+    musicBtn.addEventListener('click', () => {
+      if (!musicPlaying) {
+        scWidget.play();
+        musicPlaying = true;
+        musicBtn.textContent = "Pause 🎵";
+      } else {
+        scWidget.pause();
+        musicPlaying = false;
+        musicBtn.textContent = "Play 🎵";
+      }
     });
 
-    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
-    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
+    // Navigation buttons
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      nextArtwork();
+      startCycle();
+    });
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      prevArtwork();
+      startCycle();
+    });
 
+    // Keyboard navigation
     document.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight') { nextArtwork(); startCycle(); }
-      if (e.key === 'ArrowLeft') { prevArtwork(); startCycle(); }
+      if (e.key === 'ArrowRight') {
+        nextArtwork();
+        startCycle();
+      }
+      if (e.key === 'ArrowLeft') {
+        prevArtwork();
+        startCycle();
+      }
     });
 
-    // Start
+    // Initialize
     loadArtworks();
   </script>
 </body>
