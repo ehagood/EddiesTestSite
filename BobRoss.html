@@ -173,6 +173,19 @@
     .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
     .fullscreen #spotlight { display: block; opacity: 1; }
 
+    /* Push title and gallery down */
+body:not(.fullscreen) h1,
+body:not(.fullscreen) #gallery-container {
+  margin-top: 70px; /* matches controls panel height */
+}
+
+/* Move the fullscreen and settings buttons down */
+body:not(.fullscreen) #controls-toggle,
+body:not(.fullscreen) #fullscreen-toggle {
+  top: 70px;
+}
+
+
 .nav-button {
   position: relative;
   z-index: 2000; /* Higher than brush stroke (10) and spotlight (1) */
