@@ -154,6 +154,7 @@
       opacity: 0.5;
       z-index: 10;
       transition: left 0.7s ease-in-out;
+      pointer-events: none; /* Let clicks pass through */
     }
 
     /* Frame styles */
@@ -172,6 +173,22 @@
     .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
     .fullscreen #spotlight { display: block; opacity: 1; }
 
+.nav-button {
+  position: relative;
+  z-index: 2000; /* Higher than brush stroke (10) and spotlight (1) */
+  background: rgba(255,255,255,0.9);
+  border: 2px solid #444;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 1.2em;
+  cursor: pointer;
+  margin: 0 10px;
+}
+.nav-button:hover {
+  background: #f0f0f0;
+}
+
+    
     /* Hidden SoundCloud iframe */
     #soundcloud-embed { display: none; }
   </style>
