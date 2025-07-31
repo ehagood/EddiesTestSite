@@ -312,7 +312,7 @@
         // Store YouTube link (but don’t auto load)
   currentYouTube = art.youtube_src || null;
   document.getElementById('youtube-player').style.display = 'none';
-
+  }
       // YouTube button toggle
 let currentYouTube = null;
 const youtubePlayer = document.getElementById('youtube-player');
@@ -324,7 +324,7 @@ document.getElementById('youtubeBtn').addEventListener('click', () => {
     youtubePlayer.src = currentYouTube;
     youtubePlayer.style.display = 'block';
   }
-
+  });
       // Update Colors
    //   const colorsPanel = document.getElementById('colors-panel');
    //   colorsPanel.innerHTML = '';
@@ -334,7 +334,7 @@ document.getElementById('youtubeBtn').addEventListener('click', () => {
    //       div.className = 'color-swatch';
    //       div.innerHTML = `<div class="color-box" style="background:${c.hex}"></div>${c.name}`;
     //      colorsPanel.appendChild(div);
-        });
+      
     //  }
  //   }
 
