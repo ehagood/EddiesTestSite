@@ -407,17 +407,8 @@ function renderColors(art) {
     document.getElementById('controls-toggle').addEventListener('click', () => document.getElementById('controls-panel').classList.toggle('show'));
     document.getElementById('seriesFilter').addEventListener('change', applyFilters);
     // Fix next/prev buttons
-document.getElementById('nextBtn').addEventListener('click', () => {
-  clearInterval(cycleInterval);  // Stop auto-cycle
-  nextArtwork();
-  if (!isPaused) startCycle();    // Restart if not paused
-});
-
-document.getElementById('prevBtn').addEventListener('click', () => {
-  clearInterval(cycleInterval);
-  prevArtwork();
-  if (!isPaused) startCycle();
-});
+    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
+    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
     document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
     document.querySelectorAll('input[name="cycleMode"]').forEach(r => r.addEventListener('change', e => {
       cycleMode = e.target.value;
