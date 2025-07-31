@@ -44,7 +44,7 @@
       transition: opacity 0.5s ease-in-out;
     }
 
-    /* Controls Panel */
+    /* Collapsible & Auto-Hide Controls */
     #controls-panel {
       position: fixed;
       top: 0;
@@ -57,13 +57,12 @@
       transition: transform 0.3s ease-in-out;
       padding: 10px;
     }
-    #controls-panel.show { transform: translateY(0); }
+    #controls-panel.show { transform: translateY(0); display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }
 
-    /* Toggle buttons aligned top left & right */
-    #controls-toggle {
+    /* Buttons */
+    #controls-toggle, #fullscreen-toggle {
       position: fixed;
       top: 10px;
-      left: 10px;
       background: #d4af37;
       color: white;
       border: none;
@@ -74,28 +73,18 @@
       z-index: 1100;
       box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
-    #fullscreen-toggle {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #d4af37;
-      color: white;
-      border: none;
-      font-size: 1.2em;
-      padding: 8px 14px;
-      cursor: pointer;
-      border-radius: 6px;
-      z-index: 1100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-    }
+    #controls-toggle { left: 10px; }
+    #fullscreen-toggle { right: 10px; }
 
-    /* Mobile adjustment */
-    @media (max-width: 600px) {
-      #controls-toggle, #fullscreen-toggle { position: static; display: inline-block; margin: 5px; }
+    select, input, button, label {
+      font-size: 0.9em;
+      margin: 4px;
+      padding: 4px;
     }
-
-    select, input, button, label { font-size: 0.9em; margin: 4px; padding: 4px; }
-    .nav-button { font-size: 1.5em; padding: 10px 20px; margin: 15px; background-color: #eee; border: 2px solid #444; border-radius: 6px; cursor: pointer; }
+    .nav-button {
+      font-size: 1.5em; padding: 10px 20px; margin: 15px;
+      background-color: #eee; border: 2px solid #444; border-radius: 6px; cursor: pointer;
+    }
     .nav-button:hover { background-color: #ddd; }
 
     /* Frame styles */
@@ -113,22 +102,24 @@
     .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
     .fullscreen #spotlight { display: block; opacity: 1; }
 
-    /* Hidden SoundCloud player */
+    /* Hidden SoundCloud iframe */
     #soundcloud-embed { display: none; }
   </style>
 </head>
 <body>
   <h1>Bob Ross Gallery</h1>
-
+  
   <!-- Spotlight overlay -->
   <div id="spotlight"></div>
 
   <!-- Toggle buttons -->
   <button id="controls-toggle">⚙️ Controls</button>
   <button id="fullscreen-toggle">⛶ Fullscreen</button>
-
+  
   <!-- Controls panel -->
   <div id="controls-panel">
+    <label for="seriesFilter">Season:</label>
+    <select id="seriesFilter"><option value="all">All</option></select>
     <label for="frameStyle">Frame:</label>
     <select id="frameStyle">
       <option value="gold">Gold</option>
@@ -150,14 +141,7 @@
     <button id="pauseBtn">🛑 Pause</button>
     <button id="musicBtn">Play 🎵</button>
   </div>
-
-  <!-- Hidden SoundCloud Embed -->
-  <iframe id="soundcloud-embed"
-    width="100%" height="166" scrolling="no" frameborder="no"
-    allow="autoplay"
-    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/allenctaiwanese888999/bob-ross-intro-themethe-joy-of-painting&auto_play=false">
-  </iframe>
-
+  
   <!-- Gallery -->
   <div id="gallery-container">
     <button class="nav-button" id="prevBtn">&#8592; Prev</button>
@@ -169,33 +153,43 @@
     <div id="progress-bar-container"><div id="progress-bar"></div></div>
   </div>
 
+  <!-- Hidden SoundCloud embed -->
+  <iframe id="soundcloud-embed" width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay"
+    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/allenctaiwanese888999/bob-ross-intro-themethe-joy-of-painting&auto_play=false">
+  </iframe>
+  <script src="https://w.soundcloud.com/player/api.js"></script>
+
   <script>
     let artworks = [], filteredArtworks = [];
     let currentIndex = 0, cycleInterval, historyStack = [];
     let cycleMode = 'random', reverseOrder = false, cycleSpeed = 5000;
     let isPaused = false;
-    let hideControlsTimeout;
-
-    // ✅ SoundCloud widget
-    const scIframe = document.getElementById('soundcloud-embed');
-    const scWidget = SC.Widget(scIframe);
-    let musicPlaying = false;
 
     async function loadArtworks() {
       const res = await fetch('bob_ross_paintings.json');
       artworks = await res.json();
+
+      const seasons = [...new Set(artworks.map(a => a.season))];
+      const seasonFilter = document.getElementById('seriesFilter');
+      seasons.forEach(season => {
+        const option = document.createElement('option');
+        option.value = season;
+        option.textContent = `Season ${season}`;
+        seasonFilter.appendChild(option);
+      });
+
       filteredArtworks = shuffleArray([...artworks]);
-      showArtwork();
-      startCycle();
+      showArtwork(); startCycle();
     }
 
     function showArtwork() {
       if (!filteredArtworks.length) return;
-      const art = filteredArtworks[currentIndex], img = document.getElementById('art-image');
+      const art = filteredArtworks[currentIndex];
+      const img = document.getElementById('art-image');
       img.classList.remove('visible');
       setTimeout(() => { img.src = art.img_src; img.onload = () => img.classList.add('visible'); }, 200);
       const total = filteredArtworks.length, pos = currentIndex + 1;
-      document.getElementById('info').textContent = `${art.painting_title} (S${art.season}E${art.episode}) [${pos} of ${total}]`;
+      document.getElementById('info').textContent = `${art.painting_title} (Season ${art.season}, Episode ${art.episode}) [${pos} of ${total}]`;
       document.getElementById('progress-bar').style.width = `${(pos/total)*100}%`;
     }
 
@@ -225,45 +219,83 @@
       }
     }
 
-    function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
+    function shuffleArray(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
 
-    // Controls & Filters
+    function applyFilters() {
+      const seasonVal = document.getElementById('seriesFilter').value;
+      filteredArtworks = artworks.filter(a =>
+        (seasonVal === 'all' || a.season === seasonVal)
+      );
+      if (cycleMode === 'chronological') {
+        filteredArtworks.sort((a, b) => parseInt(a.sequential) - parseInt(b.sequential));
+        if (reverseOrder) filteredArtworks.reverse();
+      } else filteredArtworks = shuffleArray(filteredArtworks);
+      historyStack = [];
+      currentIndex = 0;
+      showArtwork();
+      startCycle();
+    }
+
+    // Controls
     const controlsPanel = document.getElementById('controls-panel');
     document.getElementById('controls-toggle').addEventListener('click', () => {
       controlsPanel.classList.toggle('show');
-      resetHideTimer();
     });
-    function resetHideTimer() {
-      if (hideControlsTimeout) clearTimeout(hideControlsTimeout);
-      if (controlsPanel.classList.contains('show'))
-        hideControlsTimeout = setTimeout(() => controlsPanel.classList.remove('show'), 5000);
-    }
-    document.addEventListener('mousemove', e => {
-      if (e.clientY < 80) {
-        controlsPanel.classList.add('show');
-        resetHideTimer();
+
+    document.getElementById('seriesFilter').addEventListener('change', applyFilters);
+    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
+    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
+    document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
+    document.querySelectorAll('input[name="cycleMode"]').forEach(r => {
+      r.addEventListener('change', e => {
+        cycleMode = e.target.value;
+        document.getElementById('chronologicalOptions').style.display =
+          cycleMode === 'chronological' ? 'inline-block' : 'none';
+        applyFilters();
+      });
+    });
+    document.getElementById('reverseOrder').addEventListener('change', e => { reverseOrder = e.target.checked; applyFilters(); });
+    document.getElementById('speedControl').addEventListener('change', e => { cycleSpeed = parseInt(e.target.value); startCycle(); });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      isPaused = !isPaused;
+      if (isPaused) { clearInterval(cycleInterval); document.getElementById('pauseBtn').textContent = "▶️ Resume"; }
+      else { startCycle(); document.getElementById('pauseBtn').textContent = "🛑 Pause"; }
+    });
+
+    // Music button using SoundCloud widget
+    let scWidget;
+    let musicPlaying = false;
+    window.addEventListener('load', () => {
+      const scIframe = document.getElementById('soundcloud-embed');
+      if (window.SC && typeof SC.Widget === 'function') {
+        scWidget = SC.Widget(scIframe);
       }
+    });
+
+    document.getElementById('musicBtn').addEventListener('click', () => {
+      if (!scWidget) return;
+      if (!musicPlaying) { scWidget.play(); musicPlaying = true; document.getElementById('musicBtn').textContent = "Pause 🎵"; }
+      else { scWidget.pause(); musicPlaying = false; document.getElementById('musicBtn').textContent = "Play 🎵"; }
     });
 
     // Fullscreen toggle
     const fullscreenBtn = document.getElementById('fullscreen-toggle');
-    const spotlight = document.getElementById('spotlight');
     fullscreenBtn.addEventListener('click', () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
         document.body.classList.add('fullscreen');
-        spotlight.style.display = "block";
         fullscreenBtn.textContent = "⛶ Exit Fullscreen";
       } else {
         document.exitFullscreen();
         document.body.classList.remove('fullscreen');
-        spotlight.style.display = "none";
         fullscreenBtn.textContent = "⛶ Fullscreen";
       }
     });
 
-    // Frame style
-    document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
+    // Frame style update
     function setFrameStyle(style) {
       const frame = document.getElementById('frame');
       frame.className = '';
@@ -272,49 +304,9 @@
       else frame.classList.add('no-frame');
     }
 
-    // Playback controls
-    document.querySelectorAll('input[name="cycleMode"]').forEach(r => {
-      r.addEventListener('change', e => {
-        cycleMode = e.target.value;
-        document.getElementById('chronologicalOptions').style.display =
-          cycleMode === 'chronological' ? 'inline-block' : 'none';
-        historyStack = [];
-        currentIndex = 0;
-        startCycle();
-      });
-    });
-    document.getElementById('reverseOrder').addEventListener('change', e => {
-      reverseOrder = e.target.checked;
-      startCycle();
-    });
-    document.getElementById('speedControl').addEventListener('change', e => {
-      cycleSpeed = parseInt(e.target.value);
-      startCycle();
-    });
-
-    document.getElementById('pauseBtn').addEventListener('click', () => {
-      isPaused = !isPaused;
-      if (isPaused) { clearInterval(cycleInterval); document.getElementById('pauseBtn').textContent = "▶️ Resume"; }
-      else { startCycle(); document.getElementById('pauseBtn').textContent = "🛑 Pause"; }
-    });
-
-    document.getElementById('musicBtn').addEventListener('click', () => {
-      if (!musicPlaying) { scWidget.play(); musicPlaying = true; document.getElementById('musicBtn').textContent = "Pause 🎵"; }
-      else { scWidget.pause(); musicPlaying = false; document.getElementById('musicBtn').textContent = "Play 🎵"; }
-    });
-
-    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
-    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
-    document.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight') { nextArtwork(); startCycle(); }
-      if (e.key === 'ArrowLeft') { prevArtwork(); startCycle(); }
-    });
-
-    // Init
+    // Start everything
     setFrameStyle(document.getElementById('frameStyle').value);
     loadArtworks();
   </script>
-  <!-- Load SoundCloud Widget API -->
-  <script src="https://w.soundcloud.com/player/api.js"></script>
 </body>
 </html>
