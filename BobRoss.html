@@ -16,7 +16,7 @@
     }
     h1 { margin: 10px 0; transition: opacity 0.3s ease-in-out; }
     #gallery-container { margin-top: 10px; position: relative; display: inline-block; }
-    #frame { display: inline-block; padding: 15px; border-radius: 8px; transition: all 0.4s ease-in-out; position: relative; z-index: 2; }
+    #frame { display: inline-block; padding: 15px; border-radius: 8px; transition: all 0.4s ease-in-out; position: relative; z-index: 2; overflow: hidden; }
     #frame img {
       display: block;
       max-width: 75vw;
@@ -44,7 +44,7 @@
       transition: opacity 0.5s ease-in-out;
     }
 
-    /* Collapsible & Auto-Hide Controls */
+    /* Controls Panel */
     #controls-panel {
       position: fixed;
       top: 0;
@@ -75,46 +75,102 @@
     }
     #controls-toggle { left: 10px; }
     #fullscreen-toggle { right: 10px; }
+    #showColorsBtn {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: #8bc34a;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 1em;
+      z-index: 1200;
+      cursor: pointer;
+    }
 
-    select, input, button, label {
-      font-size: 0.9em;
+    /* Colors Panel */
+    #colors-panel {
+      position: fixed;
+      bottom: 50px;
+      left: 10px;
+      background: rgba(255,255,255,0.95);
+      border: 2px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+      text-align: left;
+      z-index: 1200;
+      max-width: 200px;
+    }
+    .color-swatch {
+      display: inline-flex;
+      align-items: center;
       margin: 4px;
-      padding: 4px;
     }
-    .nav-button {
-      font-size: 1.5em; padding: 10px 20px; margin: 15px;
-      background-color: #eee; border: 2px solid #444; border-radius: 6px; cursor: pointer;
+    .color-box {
+      width: 20px; height: 20px;
+      margin-right: 6px;
+      border: 1px solid #000;
     }
-    .nav-button:hover { background-color: #ddd; }
+
+    /* YouTube Player */
+    #youtube-player {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 300px;
+      height: 170px;
+      border: none;
+      border-radius: 8px;
+      display: none;
+      z-index: 1200;
+    }
+
+    /* Quotes Overlay */
+    #quote-overlay {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 1.2em;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      z-index: 1300;
+    }
+
+    /* Brush Stroke */
+    #brush-stroke {
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 200%;
+      height: 100%;
+      background: url('https://www.transparenttextures.com/patterns/brush-strokes.png') repeat;
+      opacity: 0.5;
+      z-index: 10;
+      transition: left 0.7s ease-in-out;
+    }
 
     /* Frame styles */
-    .gold-frame { background: linear-gradient(145deg, #d4af37, #b8860b); border: 8px solid #8b6f47; box-shadow: 0 0 0 6px #e0c97f, 0 8px 15px rgba(0,0,0,0.6); }
-    .wood-frame { background: linear-gradient(145deg, #4b2e14, #3b1f0e); border: 8px solid #2a1407; box-shadow: 0 0 0 6px #6e4b2f, 0 8px 15px rgba(0,0,0,0.6); }
+    .gold-frame { background: linear-gradient(145deg, #d4af37, #b8860b); border: 8px solid #8b6f47; }
+    .wood-frame { background: linear-gradient(145deg, #4b2e14, #3b1f0e); border: 8px solid #2a1407; }
     .no-frame { background: none; border: none; box-shadow: none; padding: 0; }
 
-    /* Progress bar */
-    #progress-bar-container { margin: 10px auto; width: 60%; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; transition: opacity 0.3s ease-in-out; }
-    #progress-bar { width: 0%; height: 100%; background: #b8860b; transition: width 0.5s ease-in-out; }
-    #chronologicalOptions { display: none; margin-left: 10px; }
-
-
     /* Fullscreen adjustments */
-.fullscreen #gallery-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin-top: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
-.fullscreen h1, 
-.fullscreen #info, 
-.fullscreen #progress-bar-container { opacity: 0; }
-.fullscreen #spotlight { display: block; opacity: 1; }
-
+    .fullscreen #gallery-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
+    .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
+    .fullscreen #spotlight { display: block; opacity: 1; }
 
     /* Hidden SoundCloud iframe */
     #soundcloud-embed { display: none; }
@@ -122,14 +178,27 @@
 </head>
 <body>
   <h1>Bob Ross Gallery</h1>
-  
+
   <!-- Spotlight overlay -->
   <div id="spotlight"></div>
+
+  <!-- Brush stroke -->
+  <div id="brush-stroke"></div>
+
+  <!-- Quotes -->
+  <div id="quote-overlay"></div>
 
   <!-- Toggle buttons -->
   <button id="controls-toggle">⚙️ Controls</button>
   <button id="fullscreen-toggle">⛶ Fullscreen</button>
-  
+  <button id="showColorsBtn">🎨 Show Colors</button>
+
+  <!-- Colors Panel -->
+  <div id="colors-panel"></div>
+
+  <!-- YouTube Player -->
+  <iframe id="youtube-player" src="" allowfullscreen></iframe>
+
   <!-- Controls panel -->
   <div id="controls-panel">
     <label for="seriesFilter">Season:</label>
@@ -155,7 +224,7 @@
     <button id="pauseBtn">🛑 Pause</button>
     <button id="musicBtn">Play 🎵</button>
   </div>
-  
+
   <!-- Gallery -->
   <div id="gallery-container">
     <button class="nav-button" id="prevBtn">&#8592; Prev</button>
@@ -179,6 +248,13 @@
     let cycleMode = 'random', reverseOrder = false, cycleSpeed = 5000;
     let isPaused = false;
 
+    const quotes = [
+      "We don't make mistakes, just happy little accidents.",
+      "There's nothing wrong with having a tree as a friend.",
+      "Talent is a pursued interest. Anything you’re willing to practice, you can do.",
+      "There’s nothing in the world that breeds success like success."
+    ];
+
     async function loadArtworks() {
       const res = await fetch('bob_ross_paintings.json');
       artworks = await res.json();
@@ -194,28 +270,53 @@
 
       filteredArtworks = shuffleArray([...artworks]);
       showArtwork(); startCycle();
+      cycleQuotes();
     }
 
     function showArtwork() {
       if (!filteredArtworks.length) return;
       const art = filteredArtworks[currentIndex];
+
+      // Brush stroke animation
+      const brush = document.getElementById('brush-stroke');
+      brush.style.left = '0';
+      setTimeout(() => brush.style.left = '100%', 50);
+      setTimeout(() => brush.style.left = '-100%', 700);
+
       const img = document.getElementById('art-image');
       img.classList.remove('visible');
       setTimeout(() => { img.src = art.img_src; img.onload = () => img.classList.add('visible'); }, 200);
-      const total = filteredArtworks.length, pos = currentIndex + 1;
-      document.getElementById('info').textContent = `${art.painting_title} (Season ${art.season}, Episode ${art.episode}) [${pos} of ${total}]`;
-      document.getElementById('progress-bar').style.width = `${(pos/total)*100}%`;
+
+      document.getElementById('info').textContent = `${art.painting_title} (Season ${art.season}, Episode ${art.episode})`;
+      document.getElementById('progress-bar').style.width = `${((currentIndex+1)/filteredArtworks.length)*100}%`;
+
+      // Update YouTube
+      const ytPlayer = document.getElementById('youtube-player');
+      if (art.youtube_src) {
+        ytPlayer.src = art.youtube_src;
+        ytPlayer.style.display = 'block';
+      } else {
+        ytPlayer.style.display = 'none';
+      }
+
+      // Update Colors
+      const colorsPanel = document.getElementById('colors-panel');
+      colorsPanel.innerHTML = '';
+      if (art.colors) {
+        art.colors.forEach(c => {
+          const div = document.createElement('div');
+          div.className = 'color-swatch';
+          div.innerHTML = `<div class="color-box" style="background:${c.hex}"></div>${c.name}`;
+          colorsPanel.appendChild(div);
+        });
+      }
     }
 
     function nextArtwork() {
       historyStack.push(currentIndex);
-      if (cycleMode === 'random') {
-        currentIndex = Math.floor(Math.random() * filteredArtworks.length);
-      } else {
-        currentIndex = reverseOrder
-          ? (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length
-          : (currentIndex + 1) % filteredArtworks.length;
-      }
+      currentIndex = (cycleMode === 'random') ? Math.floor(Math.random() * filteredArtworks.length)
+        : reverseOrder ? (currentIndex - 1 + filteredArtworks.length) % filteredArtworks.length
+        : (currentIndex + 1) % filteredArtworks.length;
       showArtwork();
     }
 
@@ -233,89 +334,77 @@
       }
     }
 
-    function shuffleArray(arr) {
-      return arr.sort(() => Math.random() - 0.5);
-    }
+    function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
 
     function applyFilters() {
       const seasonVal = document.getElementById('seriesFilter').value;
-      filteredArtworks = artworks.filter(a =>
-        (seasonVal === 'all' || a.season === seasonVal)
-      );
+      filteredArtworks = artworks.filter(a => (seasonVal === 'all' || a.season === seasonVal));
       if (cycleMode === 'chronological') {
-        filteredArtworks.sort((a, b) => parseInt(a.sequential) - parseInt(b.sequential));
+        filteredArtworks.sort((a,b) => a.sequential - b.sequential);
         if (reverseOrder) filteredArtworks.reverse();
       } else filteredArtworks = shuffleArray(filteredArtworks);
-      historyStack = [];
-      currentIndex = 0;
-      showArtwork();
-      startCycle();
+      historyStack = []; currentIndex = 0; showArtwork(); startCycle();
     }
 
-    // Controls
-    const controlsPanel = document.getElementById('controls-panel');
-    document.getElementById('controls-toggle').addEventListener('click', () => {
-      controlsPanel.classList.toggle('show');
-    });
+    function cycleQuotes() {
+      const quoteEl = document.getElementById('quote-overlay');
+      setInterval(() => {
+        const q = quotes[Math.floor(Math.random()*quotes.length)];
+        quoteEl.textContent = q;
+        quoteEl.style.opacity = 1;
+        setTimeout(() => quoteEl.style.opacity = 0, 8000);
+      }, 20000);
+    }
 
+    // Event Listeners
+    document.getElementById('controls-toggle').addEventListener('click', () => document.getElementById('controls-panel').classList.toggle('show'));
     document.getElementById('seriesFilter').addEventListener('change', applyFilters);
     document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
     document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
     document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
-    document.querySelectorAll('input[name="cycleMode"]').forEach(r => {
-      r.addEventListener('change', e => {
-        cycleMode = e.target.value;
-        document.getElementById('chronologicalOptions').style.display =
-          cycleMode === 'chronological' ? 'inline-block' : 'none';
-        applyFilters();
-      });
-    });
+    document.querySelectorAll('input[name="cycleMode"]').forEach(r => r.addEventListener('change', e => {
+      cycleMode = e.target.value;
+      document.getElementById('chronologicalOptions').style.display = cycleMode === 'chronological' ? 'inline-block':'none';
+      applyFilters();
+    }));
     document.getElementById('reverseOrder').addEventListener('change', e => { reverseOrder = e.target.checked; applyFilters(); });
-    document.getElementById('speedControl').addEventListener('change', e => { cycleSpeed = parseInt(e.target.value); startCycle(); });
+    document.getElementById('speedControl').addEventListener('change', e => { cycleSpeed = +e.target.value; startCycle(); });
 
     document.getElementById('pauseBtn').addEventListener('click', () => {
       isPaused = !isPaused;
-      if (isPaused) { clearInterval(cycleInterval); document.getElementById('pauseBtn').textContent = "▶️ Resume"; }
-      else { startCycle(); document.getElementById('pauseBtn').textContent = "🛑 Pause"; }
+      if (isPaused) { clearInterval(cycleInterval); pauseBtn.textContent = "▶️ Resume"; }
+      else { startCycle(); pauseBtn.textContent = "🛑 Pause"; }
     });
 
-    // Music button using SoundCloud widget
-    let scWidget;
-    let musicPlaying = false;
+    document.getElementById('showColorsBtn').addEventListener('click', () => {
+      const panel = document.getElementById('colors-panel');
+      if (!isPaused) return alert("Pause the slideshow to view colors.");
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // SoundCloud Music
+    let scWidget, musicPlaying = false;
     window.addEventListener('load', () => {
       const scIframe = document.getElementById('soundcloud-embed');
-      if (window.SC && typeof SC.Widget === 'function') {
-        scWidget = SC.Widget(scIframe);
-      }
+      if (window.SC && typeof SC.Widget === 'function') scWidget = SC.Widget(scIframe);
     });
-
     document.getElementById('musicBtn').addEventListener('click', () => {
       if (!scWidget) return;
-      if (!musicPlaying) { scWidget.play(); musicPlaying = true; document.getElementById('musicBtn').textContent = "Pause 🎵"; }
-      else { scWidget.pause(); musicPlaying = false; document.getElementById('musicBtn').textContent = "Play 🎵"; }
+      if (!musicPlaying) { scWidget.play(); musicPlaying = true; musicBtn.textContent="Pause 🎵"; }
+      else { scWidget.pause(); musicPlaying = false; musicBtn.textContent="Play 🎵"; }
     });
 
     // Fullscreen toggle
     const fullscreenBtn = document.getElementById('fullscreen-toggle');
     fullscreenBtn.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        document.body.classList.add('fullscreen');
-        fullscreenBtn.textContent = "⛶ Exit Fullscreen";
-      } else {
-        document.exitFullscreen();
-        document.body.classList.remove('fullscreen');
-        fullscreenBtn.textContent = "⛶ Fullscreen";
-      }
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); document.body.classList.add('fullscreen'); fullscreenBtn.textContent="⛶ Exit Fullscreen"; }
+      else { document.exitFullscreen(); document.body.classList.remove('fullscreen'); fullscreenBtn.textContent="⛶ Fullscreen"; }
     });
 
-    // Frame style update
     function setFrameStyle(style) {
       const frame = document.getElementById('frame');
       frame.className = '';
-      if (style === 'gold') frame.classList.add('gold-frame');
-      else if (style === 'wood') frame.classList.add('wood-frame');
-      else frame.classList.add('no-frame');
+      frame.classList.add(style === 'gold' ? 'gold-frame' : style === 'wood' ? 'wood-frame' : 'no-frame');
     }
 
     // Start everything
