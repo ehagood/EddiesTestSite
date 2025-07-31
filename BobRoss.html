@@ -97,10 +97,24 @@
     #progress-bar { width: 0%; height: 100%; background: #b8860b; transition: width 0.5s ease-in-out; }
     #chronologicalOptions { display: none; margin-left: 10px; }
 
+
     /* Fullscreen adjustments */
-    .fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
-    .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
-    .fullscreen #spotlight { display: block; opacity: 1; }
+.fullscreen #gallery-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
+.fullscreen h1, 
+.fullscreen #info, 
+.fullscreen #progress-bar-container { opacity: 0; }
+.fullscreen #spotlight { display: block; opacity: 1; }
+
 
     /* Hidden SoundCloud iframe */
     #soundcloud-embed { display: none; }
