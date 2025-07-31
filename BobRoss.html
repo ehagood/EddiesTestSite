@@ -157,7 +157,7 @@
     let cycleMode = 'random', cycleSpeed = 5000, isPaused = false;
 
     async function loadArtworks() {
-      const res = await fetch('bobross.json'); // JSON file from your scraper
+      const res = await fetch('bob_ross_paintings.json'); // JSON file from your scraper
       artworks = await res.json();
       filteredArtworks = shuffleArray([...artworks]);
       showArtwork(); startCycle();
