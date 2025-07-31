@@ -285,6 +285,11 @@
       cycleQuotes();
     }
 
+          // YouTube button toggle
+let currentYouTube = null;
+const youtubePlayer = document.getElementById('youtube-player');
+const pauseBtn = document.getElementById('pauseBtn');    
+
     function showArtwork() {
       if (!filteredArtworks.length) return;
       const art = filteredArtworks[currentIndex];
@@ -313,18 +318,7 @@
   currentYouTube = art.youtube_src || null;
   document.getElementById('youtube-player').style.display = 'none';
   }
-      // YouTube button toggle
-let currentYouTube = null;
-const youtubePlayer = document.getElementById('youtube-player');
-document.getElementById('youtubeBtn').addEventListener('click', () => {
-  if (!currentYouTube) return alert("No video for this episode.");
-  if (youtubePlayer.style.display === 'block') {
-    youtubePlayer.style.display = 'none';
-  } else {
-    youtubePlayer.src = currentYouTube;
-    youtubePlayer.style.display = 'block';
-  }
-  });
+
       // Update Colors
    //   const colorsPanel = document.getElementById('colors-panel');
    //   colorsPanel.innerHTML = '';
@@ -345,6 +339,15 @@ document.getElementById('youtubeBtn').addEventListener('click', () => {
         : (currentIndex + 1) % filteredArtworks.length;
       showArtwork();
     }
+    document.getElementById('youtubeBtn').addEventListener('click', () => {
+  if (!currentYouTube) return alert("No video for this episode.");
+  if (youtubePlayer.style.display === 'block') {
+    youtubePlayer.style.display = 'none';
+  } else {
+    youtubePlayer.src = currentYouTube;
+    youtubePlayer.style.display = 'block';
+  }
+  });
 
     function prevArtwork() {
       if (historyStack.length) {
@@ -362,17 +365,17 @@ document.getElementById('youtubeBtn').addEventListener('click', () => {
 
     function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
 
-    // Fix colors rendering (prevent undefined)
 function renderColors(art) {
   const colorsPanel = document.getElementById('colors-panel');
   colorsPanel.innerHTML = '';
-  if (!art.colors || !Array.isArray(art.colors) || art.colors.length === 0) {
+
+  if (!art.colors || !art.color_hex || art.colors.length === 0 || art.color_hex.length === 0) {
     colorsPanel.innerHTML = "<em>No color data available</em>";
     return;
   }
-  art.colors.forEach(c => {
-    const name = c.name || "Unknown";
-    const hex = c.hex || "#ccc";
+
+  art.colors.forEach((name, i) => {
+    const hex = art.color_hex[i] || "#ccc"; // Match index in both arrays
     const div = document.createElement('div');
     div.className = 'color-swatch';
     div.innerHTML = `<div class="color-box" style="background:${hex}"></div>${name}`;
