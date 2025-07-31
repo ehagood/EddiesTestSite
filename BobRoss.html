@@ -192,12 +192,24 @@
   <button id="controls-toggle">⚙️ Controls</button>
   <button id="fullscreen-toggle">⛶ Fullscreen</button>
   <button id="showColorsBtn">🎨 Show Colors</button>
+  <button id="youtubeBtn" style="
+      position:fixed;bottom:10px;right:10px;
+      background:#f44336;color:white;border:none;
+      padding:8px 14px;border-radius:6px;
+      font-size:1em;z-index:1200;cursor:pointer;">
+    ▶ Watch Episode
+  </button>
 
   <!-- Colors Panel -->
   <div id="colors-panel"></div>
 
   <!-- YouTube Player -->
-  <iframe id="youtube-player" src="" allowfullscreen></iframe>
+  <!-- MOVE YOUTUBE PLAYER OUT OF AUTO DISPLAY -->
+<iframe id="youtube-player" style="
+  position:fixed;bottom:50px;right:10px;
+  width:300px;height:170px;border:none;
+  border-radius:8px;display:none;z-index:1200;" 
+  allowfullscreen></iframe>
 
   <!-- Controls panel -->
   <div id="controls-panel">
@@ -283,31 +295,45 @@
       setTimeout(() => brush.style.left = '100%', 50);
       setTimeout(() => brush.style.left = '-100%', 700);
 
-      const img = document.getElementById('art-image');
-      img.classList.remove('visible');
-      setTimeout(() => { img.src = art.img_src; img.onload = () => img.classList.add('visible'); }, 200);
+        // Load image
+  const img = document.getElementById('art-image');
+  img.classList.remove('visible');
+  setTimeout(() => { 
+    img.src = art.img_src; 
+    img.onload = () => img.classList.add('visible'); 
+  }, 200);
 
       document.getElementById('info').textContent = `${art.painting_title} (Season ${art.season}, Episode ${art.episode})`;
       document.getElementById('progress-bar').style.width = `${((currentIndex+1)/filteredArtworks.length)*100}%`;
 
-      // Update YouTube
-      const ytPlayer = document.getElementById('youtube-player');
-      if (art.youtube_src) {
-        ytPlayer.src = art.youtube_src;
-        ytPlayer.style.display = 'block';
-      } else {
-        ytPlayer.style.display = 'none';
-      }
+  // Render Colors
+  renderColors(art);
+      
+        // Store YouTube link (but don’t auto load)
+  currentYouTube = art.youtube_src || null;
+  document.getElementById('youtube-player').style.display = 'none';
+
+      // YouTube button toggle
+let currentYouTube = null;
+const youtubePlayer = document.getElementById('youtube-player');
+document.getElementById('youtubeBtn').addEventListener('click', () => {
+  if (!currentYouTube) return alert("No video for this episode.");
+  if (youtubePlayer.style.display === 'block') {
+    youtubePlayer.style.display = 'none';
+  } else {
+    youtubePlayer.src = currentYouTube;
+    youtubePlayer.style.display = 'block';
+  }
 
       // Update Colors
-      const colorsPanel = document.getElementById('colors-panel');
-      colorsPanel.innerHTML = '';
-      if (art.colors) {
-        art.colors.forEach(c => {
-          const div = document.createElement('div');
-          div.className = 'color-swatch';
-          div.innerHTML = `<div class="color-box" style="background:${c.hex}"></div>${c.name}`;
-          colorsPanel.appendChild(div);
+   //   const colorsPanel = document.getElementById('colors-panel');
+   //   colorsPanel.innerHTML = '';
+   //   if (art.colors) {
+   //     art.colors.forEach(c => {
+   //       const div = document.createElement('div');
+   //       div.className = 'color-swatch';
+   //       div.innerHTML = `<div class="color-box" style="background:${c.hex}"></div>${c.name}`;
+    //      colorsPanel.appendChild(div);
         });
       }
     }
@@ -336,6 +362,24 @@
 
     function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
 
+    // Fix colors rendering (prevent undefined)
+function renderColors(art) {
+  const colorsPanel = document.getElementById('colors-panel');
+  colorsPanel.innerHTML = '';
+  if (!art.colors || !Array.isArray(art.colors) || art.colors.length === 0) {
+    colorsPanel.innerHTML = "<em>No color data available</em>";
+    return;
+  }
+  art.colors.forEach(c => {
+    const name = c.name || "Unknown";
+    const hex = c.hex || "#ccc";
+    const div = document.createElement('div');
+    div.className = 'color-swatch';
+    div.innerHTML = `<div class="color-box" style="background:${hex}"></div>${name}`;
+    colorsPanel.appendChild(div);
+  });
+}
+
     function applyFilters() {
       const seasonVal = document.getElementById('seriesFilter').value;
       filteredArtworks = artworks.filter(a => (seasonVal === 'all' || a.season === seasonVal));
@@ -359,8 +403,15 @@
     // Event Listeners
     document.getElementById('controls-toggle').addEventListener('click', () => document.getElementById('controls-panel').classList.toggle('show'));
     document.getElementById('seriesFilter').addEventListener('change', applyFilters);
-    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
-    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
+    // Fix next/prev buttons
+document.getElementById('nextBtn').addEventListener('click', () => {
+  nextArtwork(); 
+  startCycle(); 
+});
+document.getElementById('prevBtn').addEventListener('click', () => {
+  prevArtwork(); 
+  startCycle();
+});
     document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
     document.querySelectorAll('input[name="cycleMode"]').forEach(r => r.addEventListener('change', e => {
       cycleMode = e.target.value;
