@@ -316,6 +316,80 @@ body:not(.fullscreen) #fullscreen-toggle {
     
     /* Hidden SoundCloud iframe */
     #soundcloud-embed { display: none; }
+
+/* --- MOBILE PORTRAIT --- */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.6em;
+    margin-top: 70px;
+  }
+
+  #frame img {
+    max-width: 90vw;
+    max-height: 50vh; /* Prevents vertical cutoff */
+  }
+
+  #quote-overlay {
+    font-size: 1em;
+    top: auto;
+    bottom: 20px; /* Move quotes to bottom in portrait */
+    width: 90%;
+    text-align: center;
+    transform: translateX(-50%);
+  }
+
+  #controls-toggle,
+  #fullscreen-toggle {
+    font-size: 1em;
+    padding: 6px 10px;
+    top: 60px;
+  }
+
+  #controls-panel {
+    font-size: 0.9em;
+    flex-wrap: wrap;
+  }
+
+  #info {
+    font-size: 1em;
+    padding: 6px 10px;
+    max-width: 90vw;
+  }
+
+  #youtube-player {
+    width: 90vw;
+    height: 180px;
+    bottom: 60px;
+  }
+}
+
+/* --- MOBILE LANDSCAPE --- */
+@media (max-width: 768px) and (orientation: landscape) {
+  #frame img {
+    max-width: 80vw;
+    max-height: 70vh;
+  }
+
+  #quote-overlay {
+    top: auto;
+    bottom: 5px; /* Move quotes below image in landscape */
+    font-size: 0.9em;
+    background: rgba(0,0,0,0.6);
+  }
+
+  #gallery-container {
+    margin-top: 20px;
+  }
+
+  #controls-panel.show {
+    position: absolute;
+    top: 0;
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+}
+
+    
   </style>
 </head>
 <body>
