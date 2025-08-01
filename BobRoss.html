@@ -327,7 +327,9 @@ body:not(.fullscreen) #fullscreen-toggle {
 @media (max-width: 768px) and (orientation: portrait) {
   h1 { font-size: 1.4em; margin-top: 10px; }
   #frame img { max-height: 55vh; max-width: 90vw; }
-  #quote-overlay { top: auto; bottom: 80px; font-size: 1em; }
+  #quote-overlay {
+  display: none !important;
+  } 
   #nav-frame-container { flex-direction: column; margin-bottom: 10px; }
 }
 
