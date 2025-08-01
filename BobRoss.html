@@ -6,8 +6,12 @@
   <title>Bob Ross Gallery</title>
 
   <style>
+
+
 html, body {
-  overflow-x: hidden;
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* Prevent scrolling */
 }
 
 @keyframes fadeBrush {
@@ -277,7 +281,7 @@ body:not(.fullscreen) #fullscreen-toggle {
 
 .nav-button {
   position: relative;
-  z-index: 2000; /* Higher than brush stroke (10) and spotlight (1) */
+  z-index: z-index: 500 !important; /* Lower than color panel (1200) & YouTube (1200) 2000; /* Higher than brush stroke (10) and spotlight (1) */
   background: rgba(255,255,255,0.9);
   border: 2px solid #444;
   border-radius: 6px;
@@ -330,76 +334,65 @@ body:not(.fullscreen) #fullscreen-toggle {
 
 /* ---- MOBILE PORTRAIT ---- */
 @media (max-width: 768px) and (orientation: portrait) {
-  /* Adjust heading & controls button */
-  h1 {
-    margin-top: 15px;
-    font-size: 1.6em;
-  }
-  #controls-toggle {
-    position: relative;
-    display: block;
-    margin: 8px auto 10px auto;
-    top: 0 !important;
-    left: auto !important;
-  }
-  #fullscreen-toggle {
-    display: none !important;
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
-  /* Move Colors & Watch buttons above nav buttons */
-  #showColorsBtn,
+  /* Keep Colors & YouTube fixed at bottom */
+  #showColorsBtn {
+    position: fixed !important;
+    bottom: 10px;
+    left: 10px;
+    width: auto;
+  }
   #youtubeBtn {
-    position: relative !important;
-    display: block;
-    margin: 5px auto;
-    width: 60%;
-    font-size: 0.9em;
-    bottom: auto !important;
-    left: auto !important;
-    right: auto !important;
+    position: fixed !important;
+    bottom: 10px;
+    right: 10px;
+    width: auto;
   }
 
-  /* Reduce image size for portrait */
+  /* Adjust image to fit without scrolling */
   #frame img {
-    max-width: 90vw;
     max-height: 50vh;
   }
 
-  /* Stack nav buttons vertically */
+  /* Stack nav buttons tighter and center */
   #nav-frame-container {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 5px;
   }
 }
 
 /* ---- MOBILE LANDSCAPE ---- */
 @media (max-width: 1024px) and (orientation: landscape) {
-  /* Keep controls in top-left */
-  #controls-toggle {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1500;
-  }
-  #fullscreen-toggle {
-    display: none !important;
+  html, body {
+    overflow: hidden; /* Lock viewport height */
   }
 
-  /* Move quotes down */
-  #quote-overlay {
-    top: auto !important;
-    bottom: 10px !important;
-    transform: translateX(-50%);
+  /* Keep Colors & YouTube buttons bottom fixed */
+  #showColorsBtn {
     position: fixed !important;
-    max-width: 90%;
-    font-size: 1em;
+    bottom: 10px;
+    left: 10px;
+  }
+  #youtubeBtn {
+    position: fixed !important;
+    bottom: 10px;
+    right: 10px;
   }
 
-  /* Maintain painting size better in landscape */
+  /* Reduce image slightly to prevent scrolling */
   #frame img {
-    max-width: 85vw;
-    max-height: 70vh;
+    max-height: 65vh;
+  }
+
+  /* Adjust quote placement to avoid overlap */
+  #quote-overlay {
+    bottom: 60px !important; /* Above buttons */
   }
 }
 
