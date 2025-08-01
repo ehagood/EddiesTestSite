@@ -52,7 +52,11 @@ body::before {
 }
 
 
-    h1 { margin: 10px 0; transition: opacity 0.3s ease-in-out; }
+    h1 {
+  text-align: center; /* Center the title */
+  margin: 10px 0;
+  transition: opacity 0.3s ease-in-out;
+}
 
 
     #gallery-container {
@@ -173,21 +177,21 @@ body::before {
       z-index: 1200;
     }
 
-    /* Quotes Overlay */
-    #quote-overlay {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 1.2em;
-      opacity: 0;
-      transition: opacity 1s ease-in-out;
-      z-index: 1300;
-    }
+#quote-overlay {
+  position: fixed;
+  top: 100px; /* Increase this value to push it down */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1.2em;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  z-index: 1300;
+}
+
 
     /* Brush Stroke */
     #brush-stroke {
@@ -502,7 +506,7 @@ function renderColors(art) {
 
     document.getElementById('showColorsBtn').addEventListener('click', () => {
       const panel = document.getElementById('colors-panel');
-      if (!isPaused) return alert("Pause the slideshow to view colors.");
+      //if (!isPaused) return alert("Pause the slideshow to view colors.");
       panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
     });
 
