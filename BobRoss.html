@@ -317,77 +317,46 @@ body:not(.fullscreen) #fullscreen-toggle {
     /* Hidden SoundCloud iframe */
     #soundcloud-embed { display: none; }
 
-/* --- MOBILE PORTRAIT --- */
-@media (max-width: 768px) {
-  h1 {
-    font-size: 1.6em;
-    margin-top: 70px;
-  }
+/* Default (desktop/tablet): keep current scaling */
+#frame img {
+  max-width: 75vw;
+  max-height: 70vh;
+}
 
+/* Mobile Portrait */
+@media (max-width: 768px) and (orientation: portrait) {
   #frame img {
-    max-width: 90vw;
-    max-height: 50vh; /* Prevents vertical cutoff */
+    max-width: 95vw;   /* Nearly full width */
+    max-height: 65vh;  /* Slightly shorter height for UI space */
   }
 
   #quote-overlay {
-    font-size: 1em;
+    font-size: 1em;          /* Scale down quotes */
+    max-width: 90%;          /* Prevent overlap */
     top: auto;
-    bottom: 20px; /* Move quotes to bottom in portrait */
-    width: 90%;
-    text-align: center;
+    bottom: 10px;            /* Move quotes below painting */
     transform: translateX(-50%);
   }
 
-  #controls-toggle,
-  #fullscreen-toggle {
-    font-size: 1em;
-    padding: 6px 10px;
-    top: 60px;
-  }
-
-  #controls-panel {
-    font-size: 0.9em;
-    flex-wrap: wrap;
-  }
-
-  #info {
-    font-size: 1em;
-    padding: 6px 10px;
-    max-width: 90vw;
-  }
-
-  #youtube-player {
-    width: 90vw;
-    height: 180px;
-    bottom: 60px;
+  #gallery-container {
+    margin-top: 50px;        /* Reduce top spacing */
   }
 }
 
-/* --- MOBILE LANDSCAPE --- */
+/* Mobile Landscape */
 @media (max-width: 768px) and (orientation: landscape) {
   #frame img {
-    max-width: 80vw;
-    max-height: 70vh;
+    max-width: 90vw;
+    max-height: 80vh;
   }
 
   #quote-overlay {
-    top: auto;
-    bottom: 5px; /* Move quotes below image in landscape */
-    font-size: 0.9em;
-    background: rgba(0,0,0,0.6);
-  }
-
-  #gallery-container {
-    margin-top: 20px;
-  }
-
-  #controls-panel.show {
-    position: absolute;
-    top: 0;
-    max-height: 40vh;
-    overflow-y: auto;
+    font-size: 1em;
+    top: 10px;               /* Keep at top in landscape */
+    bottom: auto;
   }
 }
+
 
     
   </style>
