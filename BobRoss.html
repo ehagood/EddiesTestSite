@@ -80,23 +80,7 @@ html, body {
       transition: opacity 1s ease-in-out, transform 8s ease-in-out;
     }
     #frame img.visible { opacity: 1; transform: scale(1.05); }
-    
-   #info {
-  margin-top: 8px;
-  font-size: 1.2em;
-  transition: opacity 0.3s ease-in-out;
-
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 8px 16px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  color: #333;
-  max-width: 75vw;
-  text-align: center;
-  margin-left: auto;
-  margin-right: auto;
-}
+  
 
     /* Spotlight effect for fullscreen */
     #spotlight {
@@ -268,6 +252,29 @@ body:not(.fullscreen) #fullscreen-toggle {
   background: #f0f0f0;
 }
 
+#nav-frame-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* space between buttons and frame */
+  margin-bottom: 12px;
+}
+
+#info {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  color: #333;
+  max-width: 75vw;
+  text-align: center;
+  margin: 0 auto 10px auto; /* center horizontally, add bottom margin */
+  font-size: 1.2em;
+  transition: opacity 0.3s ease-in-out;
+}
+
+
     
     /* Hidden SoundCloud iframe */
     #soundcloud-embed { display: none; }
@@ -339,16 +346,18 @@ body:not(.fullscreen) #fullscreen-toggle {
     <button id="musicBtn">Play 🎵</button>
   </div>
 
-  <!-- Gallery -->
-  <div id="gallery-container">
+<div id="gallery-container">
+  <div id="nav-frame-container" style="display: flex; justify-content: center; align-items: center; gap: 10px;">
     <button class="nav-button" id="prevBtn">&#8592; Prev</button>
     <div id="frame" class="gold-frame">
       <img id="art-image" src="" alt="Bob Ross Painting" />
     </div>
     <button class="nav-button" id="nextBtn">Next &#8594;</button>
-    <div id="info"></div>
-    <div id="progress-bar-container"><div id="progress-bar"></div></div>
   </div>
+  
+  <div id="info"></div> <!-- This will now be below the nav-frame row -->
+  <div id="progress-bar-container"><div id="progress-bar"></div></div>
+</div>
 
   <!-- Hidden SoundCloud embed -->
   <iframe id="soundcloud-embed" width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay"
