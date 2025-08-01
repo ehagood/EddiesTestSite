@@ -299,56 +299,7 @@ body:not(.fullscreen) #fullscreen-toggle {
 }
 
 
-@media (max-width: 768px) and (orientation: portrait) {
-  /* Move heading down slightly for spacing */
-  h1 {
-    margin-top: 20px;
-    font-size: 1.6em;
-  }
 
-  /* Hide fullscreen button */
-  #fullscreen-toggle {
-    display: none;
-  }
-
-  /* Move controls button below heading */
-  #controls-toggle {
-    position: relative;
-    top: 0;
-    display: block;
-    margin: 10px auto;
-    z-index: 1100;
-  }
-
-  /* Adjust nav frame container for spacing */
-  #nav-frame-container {
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 8px;
-  }
-
-  /* Reduce frame size for better fit */
-  #frame img {
-    max-width: 90vw;
-    max-height: 60vh;
-  }
-
-  /* Adjust buttons overlay (as before) */
-  #showColorsBtn,
-  #youtubeBtn {
-    position: absolute;
-    bottom: 50px;
-    right: 10px;
-    z-index: 3;
-    font-size: 0.9em;
-    padding: 6px 10px;
-  }
-
-  #youtubeBtn {
-    bottom: 90px;
-    background: #f44336;
-  }
-}
 
 
 
@@ -377,21 +328,77 @@ body:not(.fullscreen) #fullscreen-toggle {
   max-height: 70vh;
 }
 
-
-/* Mobile Landscape */
-@media (max-width: 768px) and (orientation: landscape) {
-  #frame img {
-    max-width: 90vw;
-    max-height: 80vh;
+/* ---- MOBILE PORTRAIT ---- */
+@media (max-width: 768px) and (orientation: portrait) {
+  /* Adjust heading spacing & Controls button */
+  h1 {
+    margin-top: 20px;
+    font-size: 1.6em;
   }
+  #controls-toggle {
+    position: relative;
+    display: block;
+    margin: 8px auto 10px auto;
+    top: 0 !important;
+  }
+  #fullscreen-toggle {
+    display: none !important; /* Hide fullscreen on mobile */
+  }
+
+  /* Stack Show Colors & Watch Episode above Next button */
+  #mobile-action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  #showColorsBtn, #youtubeBtn {
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    display: inline-block;
+    width: 45%;
+    font-size: 0.9em;
+  }
+
+  /* Frame & navigation adjustments */
+  #frame img {
+    max-width: 95vw;
+    max-height: 55vh;
+  }
+  #nav-frame-container {
+    flex-direction: column;
+  }
+}
+
+/* ---- MOBILE LANDSCAPE ---- */
+@media (max-width: 1024px) and (orientation: landscape) {
+  /* Move quotes to bottom */
   #quote-overlay {
-    top: auto;
-    bottom: 20px; /* move to bottom in landscape */
+    top: auto !important;
+    bottom: 10px !important;
     transform: translateX(-50%);
     max-width: 90%;
     font-size: 1em;
+    position: fixed !important;
+  }
+
+  /* Reduce painting size slightly in landscape */
+  #frame img {
+    max-height: 65vh;
+  }
+
+  /* Keep controls button tucked near top in landscape */
+  #controls-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1500;
   }
 }
+
 
 
     
