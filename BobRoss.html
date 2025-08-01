@@ -4,132 +4,149 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bob Ross Gallery</title>
-  <!-- Embedded favicon -->
   <link rel="icon" type="image/png" sizes="32x32" href="bob-ross.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="bob-ross.png" />
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      overflow: hidden; /* Prevent extra scroll */
-      display: block;
-      background: black;
-      color: #333;
-      font-family: Arial, sans-serif;
-    }
+
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* Prevent extra scroll */
+  display: block; /* Remove flex forcing */
+}
+
+@keyframes fadeBrush {
+  from { opacity: 0.05; }
+  to { opacity: 0.15; }
+}
+
+  /* Background container */
+  #background-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -10;
+    overflow: hidden;
+  }
+
+  /* Background image, dimmed */
+  #background-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.8);
+  }
+
+  /* White overlay that fades out */
+  #white-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    opacity: 1;
+    animation: fadeWhite 10s forwards;
+    pointer-events: none;
+  }
+
+  @keyframes fadeWhite {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+    
+
+
 
     h1 {
-      text-align: center;
-      margin: 10px 0;
-      transition: opacity 0.3s ease-in-out;
-      color: white;
-      text-shadow: 0 0 5px black;
-    }
+  text-align: center; /* Center the title */
+  margin: 10px 0;
+  transition: opacity 0.3s ease-in-out;
+}
 
-    /* Background container */
-    #background-container {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: -10;
-      overflow: hidden;
-    }
 
-    /* Background image */
-    #background-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      filter: brightness(0.8);
-    }
-
-    /* White overlay that fades out */
-    #white-overlay {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: white;
-      opacity: 1;
-      animation: fadeWhite 10s forwards;
-      pointer-events: none;
-      z-index: 2;
-    }
-    @keyframes fadeWhite {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
-
-    /* Brush stroke */
-    #brush-stroke {
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 200%;
-      height: 100%;
-      background-repeat: repeat;
-      opacity: 0.5;
-      z-index: 10;
-      transition: left 0.7s ease-in-out;
-      pointer-events: none; /* Let clicks pass through */
-      background-size: auto 100%;
-    }
-
-    /* Frame container */
     #gallery-container {
-      margin: 10px auto;
-      position: relative;
-      display: block;
-      text-align: center;
-      z-index: 20;
-      max-width: 95vw;
-    }
+  margin: 10px auto;       /* Auto margin horizontally centers */
+  position: relative;
+  display: block;          /* Make it block-level to respect auto margin */
+  text-align: center;      /* Keep inner content (buttons + image) centered */
+}
 
-    #frame {
-      display: inline-block;
-      padding: 15px;
-      border-radius: 8px;
-      position: relative;
-      z-index: 2;
-      overflow: hidden;
-      background: #fff;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
-      border: 4px solid white;
-      max-width: 75vw;
-      max-height: 70vh;
-    }
+    #frame { display: inline-block; padding: 15px; border-radius: 8px; transition: all 0.4s ease-in-out; position: relative; z-index: 2; overflow: hidden; }
     #frame img {
       display: block;
-      max-width: 100%;
-      max-height: 100%;
+      max-width: 75vw;
+      max-height: 70vh;
+      border: 4px solid #fff;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
+      background-color: #fff;
       opacity: 0;
       transform: scale(1);
       transition: opacity 1s ease-in-out, transform 8s ease-in-out;
     }
-    #frame img.visible {
-      opacity: 1;
-      transform: scale(1.05);
+    #frame img.visible { opacity: 1; transform: scale(1.05); }
+  
+
+    /* Spotlight effect for fullscreen */
+    #spotlight {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.8) 100%);
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.5s ease-in-out;
     }
 
-    /* Controls and buttons styling (kept minimal for clarity) */
-    button {
+    /* Controls Panel */
+    #controls-panel {
       position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      border-bottom: 2px solid #ccc;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease-in-out;
+      padding: 10px;
+    }
+    #controls-panel.show { transform: translateY(0); display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }
+
+    /* Buttons */
+    #controls-toggle, #fullscreen-toggle {
+      position: fixed;
+      top: 10px;
+      background: #d4af37;
+      color: white;
+      border: none;
+      font-size: 1.2em;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      z-index: 1100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    #controls-toggle { left: 10px; }
+    #fullscreen-toggle { right: 10px; }
+    #showColorsBtn {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: #8bc34a;
+      color: white;
+      border: none;
       padding: 8px 14px;
       border-radius: 6px;
-      border: none;
-      color: white;
-      cursor: pointer;
       font-size: 1em;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-      z-index: 1100;
+      z-index: 1200;
+      cursor: pointer;
     }
-    #controls-toggle { top: 70px; left: 10px; background: #d4af37; }
-    #fullscreen-toggle { top: 70px; right: 10px; background: #d4af37; }
-    #showColorsBtn { bottom: 10px; left: 10px; background: #8bc34a; z-index: 1200; }
-    #youtubeBtn { bottom: 10px; right: 10px; background: #f44336; z-index: 1200; }
 
-    /* Colors panel */
+    /* Colors Panel */
     #colors-panel {
       position: fixed;
       bottom: 50px;
@@ -154,27 +171,10 @@
       border: 1px solid #000;
     }
 
-    /* Quote overlay */
-    #quote-overlay {
-      position: fixed;
-      top: 120px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 1.2em;
-      opacity: 0;
-      transition: opacity 1s ease-in-out;
-      z-index: 1300;
-      max-width: 90vw;
-    }
-
     /* YouTube Player */
     #youtube-player {
       position: fixed;
-      bottom: 50px;
+      bottom: 10px;
       right: 10px;
       width: 300px;
       height: 170px;
@@ -184,57 +184,274 @@
       z-index: 1200;
     }
 
-    /* Responsive */
-    @media (max-width: 768px) and (orientation: portrait) {
-      h1 { font-size: 1.4em; margin-top: 10px; }
-      #frame { max-height: 55vh; max-width: 90vw; }
-      #quote-overlay { top: auto; bottom: 80px; font-size: 1em; }
+    /* Shared: Keep Colors & YouTube fixed bottom */
+#showColorsBtn {
+  position: fixed !important;
+  bottom: 10px;
+  left: 10px;
+  z-index: 1200;
+}
+
+#youtubeBtn {
+  position: fixed !important;
+  bottom: 10px;
+  right: 10px;
+  z-index: 1200;
+}
+
+#quote-overlay {
+  position: fixed;
+  top: 120px; /* Increase this value to push it down */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1.2em;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  z-index: 1300;
+}
+
+    #background-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -10;
+  overflow: hidden;
+}
+
+#background-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#background-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4); /* Adjust opacity here */
+  z-index: 1;
+}
+
+#white-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  opacity: 1;
+  animation: fadeWhite 10s forwards;
+  pointer-events: none;
+  z-index: 2;
+}
+
+
+
+    /* Brush Stroke */
+    #brush-stroke {
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 200%;
+      height: 100%;
+      background: url('https://www.transparenttextures.com/patterns/brush-strokes.png') repeat;
+      opacity: 0.5;
+      z-index: 10;
+      transition: left 0.7s ease-in-out;
+      pointer-events: none; /* Let clicks pass through */
     }
-    @media (max-width: 1024px) and (orientation: landscape) {
-      h1 { font-size: 1.2em; margin-top: 5px; }
-      #frame { max-height: 65vh; max-width: 80vw; }
-      #quote-overlay { bottom: 80px; font-size: 0.9em; }
+
+    /* Frame styles */
+    .gold-frame { background: linear-gradient(145deg, #d4af37, #b8860b); border: 8px solid #8b6f47; }
+    .wood-frame { background: linear-gradient(145deg, #4b2e14, #3b1f0e); border: 8px solid #2a1407; }
+    .no-frame { background: none; border: none; box-shadow: none; padding: 0; }
+
+    /* Fullscreen adjustments */
+    .fullscreen #gallery-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
+    .fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
+    .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
+    .fullscreen #spotlight { display: block; opacity: 1; }
+
+    /* Push title and gallery down */
+body:not(.fullscreen) h1,
+body:not(.fullscreen) #gallery-container {
+  margin-top: 70px; /* matches controls panel height */
+}
+
+/* Move the fullscreen and settings buttons down */
+body:not(.fullscreen) #controls-toggle,
+body:not(.fullscreen) #fullscreen-toggle {
+  top: 70px;
+}
+
+
+.nav-button {
+  position: relative;
+  z-index: z-index: 500 !important; /* Lower than color panel (1200) & YouTube (1200) 2000; /* Higher than brush stroke (10) and spotlight (1) */
+  background: rgba(255,255,255,0.9);
+  border: 2px solid #444;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 1.2em;
+  cursor: pointer;
+  margin: 0 10px;
+}
+.nav-button:hover {
+  background: #f0f0f0;
+}
+  /* Default (desktop/tablet): keep current row layout */
+#nav-frame-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* space between buttons and frame */
+  margin-bottom: 12px;
+}
+
+
+
+
+
+
+#info {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  color: #333;
+  max-width: 75vw;
+  text-align: center;
+  margin: 0 auto 10px auto; /* center horizontally, add bottom margin */
+  font-size: 1.2em;
+  transition: opacity 0.3s ease-in-out;
+}
+
+
+    
+    /* Hidden SoundCloud iframe */
+    #soundcloud-embed { display: none; }
+
+/* Default (desktop/tablet): keep current scaling */
+#frame img {
+  max-width: 75vw;
+  max-height: 70vh;
+}
+
+/* ---- MOBILE PORTRAIT ---- */
+@media (max-width: 768px) and (orientation: portrait) {
+  h1 { font-size: 1.4em; margin-top: 10px; }
+  #frame img { max-height: 55vh; max-width: 90vw; }
+  #quote-overlay { top: auto; bottom: 80px; font-size: 1em; }
+  #nav-frame-container { flex-direction: column; margin-bottom: 10px; }
+}
+
+/* ---- MOBILE LANDSCAPE ---- */
+@media (max-width: 1024px) and (orientation: landscape) {
+  h1 { font-size: 1.2em; margin-top: 5px; }
+  #frame img { max-height: 65vh; max-width: 80vw; }
+  #quote-overlay { bottom: 80px; font-size: 0.9em; }
+  #nav-frame-container { flex-direction: row; gap: 8px; margin-bottom: 5px; }
+}
+
+    
   </style>
 </head>
 <body>
   <h1>Bob Ross Gallery</h1>
 
-  <div id="background-container">
-    <img id="background-image" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1350&q=80" alt="Painting background" />
-    <div id="white-overlay"></div>
-  </div>
+  <!-- Spotlight overlay -->
+  <div id="spotlight"></div>
 
+<div id="background-container">
+  <img id="background-image" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1350&q=80" alt="Painting background" />
+  <div id="white-overlay"></div>
+</div>
+  
+  <!-- Brush stroke -->
   <div id="brush-stroke"></div>
+
+  <!-- Quotes -->
   <div id="quote-overlay"></div>
 
-  <!-- Buttons -->
+  <div id="background-overlay"></div>
+
+  <!-- Toggle buttons -->
   <button id="controls-toggle">⚙️ Controls</button>
   <button id="fullscreen-toggle">⛶ Fullscreen</button>
   <button id="showColorsBtn">🎨 Show Colors</button>
-  <button id="youtubeBtn">▶ Watch Episode</button>
+  <button id="youtubeBtn" style="
+      position:fixed;bottom:10px;right:10px;
+      background:#f44336;color:white;border:none;
+      padding:8px 14px;border-radius:6px;
+      font-size:1em;z-index:1200;cursor:pointer;">
+    ▶ Watch Episode
+  </button>
 
   <!-- Colors Panel -->
   <div id="colors-panel"></div>
 
   <!-- YouTube Player -->
-  <iframe id="youtube-player" allowfullscreen></iframe>
+  <!-- MOVE YOUTUBE PLAYER OUT OF AUTO DISPLAY -->
+<iframe id="youtube-player" style="
+  position:fixed;bottom:50px;right:10px;
+  width:300px;height:170px;border:none;
+  border-radius:8px;display:none;z-index:1200;" 
+  allowfullscreen></iframe>
 
-  <!-- Gallery -->
-  <div id="gallery-container">
-    <div id="nav-frame-container" style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-      <button class="nav-button" id="prevBtn">&#8592; Prev</button>
-      <div id="frame">
-        <img id="art-image" src="" alt="Bob Ross Painting" />
-      </div>
-      <button class="nav-button" id="nextBtn">Next &#8594;</button>
-    </div>
-    <div id="info"></div>
+  <!-- Controls panel -->
+  <div id="controls-panel">
+    <label for="seriesFilter">Season:</label>
+    <select id="seriesFilter"><option value="all">All</option></select>
+    <label for="frameStyle">Frame:</label>
+    <select id="frameStyle">
+      <option value="gold">Gold</option>
+      <option value="wood">Wood</option>
+      <option value="none">None</option>
+    </select>
+    <label>Mode:</label>
+    <label><input type="radio" name="cycleMode" value="random" checked> Random</label>
+    <label><input type="radio" name="cycleMode" value="chronological"> Chronological</label>
+    <span id="chronologicalOptions">
+      <label><input type="checkbox" id="reverseOrder"> Reverse</label>
+    </span>
+    <label for="speedControl">Speed:</label>
+    <select id="speedControl">
+      <option value="5000" selected>5s</option>
+      <option value="10000">10s</option>
+      <option value="15000">15s</option>
+    </select>
+    <button id="pauseBtn">🛑 Pause</button>
+    <button id="musicBtn">Play 🎵</button>
   </div>
+
+<div id="gallery-container">
+  <div id="nav-frame-container" style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+    <button class="nav-button" id="prevBtn">&#8592; Prev</button>
+    <div id="frame" class="gold-frame">
+      <img id="art-image" src="" alt="Bob Ross Painting" />
+    </div>
+    <button class="nav-button" id="nextBtn">Next &#8594;</button>
+  </div>
+  
+  <div id="info"></div> <!-- This will now be below the nav-frame row -->
+  <div id="progress-bar-container"><div id="progress-bar"></div></div>
+</div>
 
   <!-- Hidden SoundCloud embed -->
   <iframe id="soundcloud-embed" width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay"
-    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/allenctaiwanese888999/bob-ross-intro-themethe-joy-of-painting&auto_play=false" style="display:none;">
+    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/allenctaiwanese888999/bob-ross-intro-themethe-joy-of-painting&auto_play=false">
   </iframe>
   <script src="https://w.soundcloud.com/player/api.js"></script>
 
@@ -258,38 +475,6 @@
       "Trees don't grow even, they don't grow straight just however it makes them happy."
     ];
 
-    // Preload brush stroke background image for #brush-stroke and set it once loaded
-    const brushStroke = document.getElementById('brush-stroke');
-    const brushImageUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1350&q=80";
-    const brushTexture = new Image();
-    brushTexture.src = brushImageUrl;
-    brushTexture.onload = () => {
-      brushStroke.style.backgroundImage = `url('${brushImageUrl}')`;
-      brushStroke.style.backgroundSize = 'auto 100%';
-      animateBrushStroke();
-    };
-
-    function animateBrushStroke() {
-      if (brushStroke.offsetWidth > 0 && brushStroke.offsetHeight > 0) {
-        brushStroke.style.left = '0';
-        setTimeout(() => brushStroke.style.left = '100%', 50);
-        setTimeout(() => brushStroke.style.left = '-100%', 700);
-      }
-    }
-
-    // SoundCloud widget safe initialization
-    let scWidget, musicPlaying = false;
-    window.addEventListener('load', () => {
-      try {
-        const scIframe = document.getElementById('soundcloud-embed');
-        if (window.SC && typeof SC.Widget === 'function') {
-          scWidget = SC.Widget(scIframe);
-        }
-      } catch (e) {
-        console.warn("SoundCloud Widget failed to initialize:", e);
-      }
-    });
-
     async function loadArtworks() {
       const res = await fetch('bob_ross_paintings.json');
       artworks = await res.json();
@@ -304,33 +489,56 @@
       });
 
       filteredArtworks = shuffleArray([...artworks]);
-      showArtwork();
-      startCycle();
+      showArtwork(); startCycle();
       cycleQuotes();
     }
 
-    let currentYouTube = null;
-    const youtubePlayer = document.getElementById('youtube-player');
+          // YouTube button toggle
+let currentYouTube = null;
+const youtubePlayer = document.getElementById('youtube-player');
+const pauseBtn = document.getElementById('pauseBtn');    
 
     function showArtwork() {
       if (!filteredArtworks.length) return;
       const art = filteredArtworks[currentIndex];
 
-      animateBrushStroke();
+      // Brush stroke animation
+      const brush = document.getElementById('brush-stroke');
+      brush.style.left = '0';
+      setTimeout(() => brush.style.left = '100%', 50);
+      setTimeout(() => brush.style.left = '-100%', 700);
 
-      const img = document.getElementById('art-image');
-      img.classList.remove('visible');
-      setTimeout(() => {
-        img.src = art.img_src;
-        img.onload = () => img.classList.add('visible');
-      }, 200);
+        // Load image
+  const img = document.getElementById('art-image');
+  img.classList.remove('visible');
+  setTimeout(() => { 
+    img.src = art.img_src; 
+    img.onload = () => img.classList.add('visible'); 
+  }, 200);
 
       document.getElementById('info').textContent = `${art.painting_title} (Season ${art.season}, Episode ${art.episode})`;
+      document.getElementById('progress-bar').style.width = `${((currentIndex+1)/filteredArtworks.length)*100}%`;
 
-      // Store YouTube link but don’t auto-load
-      currentYouTube = art.youtube_src || null;
-      youtubePlayer.style.display = 'none';
-    }
+  // Render Colors
+  renderColors(art);
+      
+        // Store YouTube link (but don’t auto load)
+  currentYouTube = art.youtube_src || null;
+  document.getElementById('youtube-player').style.display = 'none';
+  }
+
+      // Update Colors
+   //   const colorsPanel = document.getElementById('colors-panel');
+   //   colorsPanel.innerHTML = '';
+   //   if (art.colors) {
+   //     art.colors.forEach(c => {
+   //       const div = document.createElement('div');
+   //       div.className = 'color-swatch';
+   //       div.innerHTML = `<div class="color-box" style="background:${c.hex}"></div>${c.name}`;
+    //      colorsPanel.appendChild(div);
+      
+    //  }
+ //   }
 
     function nextArtwork() {
       historyStack.push(currentIndex);
@@ -340,15 +548,14 @@
       showArtwork();
     }
     document.getElementById('youtubeBtn').addEventListener('click', () => {
-      if (!currentYouTube) return alert("No video for this episode.");
-      if (youtubePlayer.style.display === 'block') {
-        youtubePlayer.style.display = 'none';
-        youtubePlayer.src = '';
-      } else {
-        youtubePlayer.src = currentYouTube;
-        youtubePlayer.style.display = 'block';
-      }
-    });
+  if (!currentYouTube) return alert("No video for this episode.");
+  if (youtubePlayer.style.display === 'block') {
+    youtubePlayer.style.display = 'none';
+  } else {
+    youtubePlayer.src = currentYouTube;
+    youtubePlayer.style.display = 'block';
+  }
+  });
 
     function prevArtwork() {
       if (historyStack.length) {
@@ -364,14 +571,40 @@
       }
     }
 
-    function shuffleArray(arr) {
-      return arr.sort(() => Math.random() - 0.5);
+    function shuffleArray(arr) { return arr.sort(() => Math.random() - 0.5); }
+
+function renderColors(art) {
+  const colorsPanel = document.getElementById('colors-panel');
+  colorsPanel.innerHTML = '';
+
+  if (!art.colors || !art.color_hex || art.colors.length === 0 || art.color_hex.length === 0) {
+    colorsPanel.innerHTML = "<em>No color data available</em>";
+    return;
+  }
+
+  art.colors.forEach((name, i) => {
+    const hex = art.color_hex[i] || "#ccc"; // Match index in both arrays
+    const div = document.createElement('div');
+    div.className = 'color-swatch';
+    div.innerHTML = `<div class="color-box" style="background:${hex}"></div>${name}`;
+    colorsPanel.appendChild(div);
+  });
+}
+
+    function applyFilters() {
+      const seasonVal = document.getElementById('seriesFilter').value;
+      filteredArtworks = artworks.filter(a => (seasonVal === 'all' || a.season === seasonVal));
+      if (cycleMode === 'chronological') {
+        filteredArtworks.sort((a,b) => a.sequential - b.sequential);
+        if (reverseOrder) filteredArtworks.reverse();
+      } else filteredArtworks = shuffleArray(filteredArtworks);
+      historyStack = []; currentIndex = 0; showArtwork(); startCycle();
     }
 
     function cycleQuotes() {
       const quoteEl = document.getElementById('quote-overlay');
       setInterval(() => {
-        const q = quotes[Math.floor(Math.random() * quotes.length)];
+        const q = quotes[Math.floor(Math.random()*quotes.length)];
         quoteEl.textContent = q;
         quoteEl.style.opacity = 1;
         setTimeout(() => quoteEl.style.opacity = 0, 8000);
@@ -379,45 +612,60 @@
     }
 
     // Event Listeners
-    document.getElementById('controls-toggle').addEventListener('click', () => {
-      const panel = document.getElementById('controls-panel');
-      if (panel) panel.classList.toggle('show');
-    });
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      prevArtwork();
-      startCycle();
-    });
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      nextArtwork();
-      startCycle();
+    document.getElementById('controls-toggle').addEventListener('click', () => document.getElementById('controls-panel').classList.toggle('show'));
+    document.getElementById('seriesFilter').addEventListener('change', applyFilters);
+    // Fix next/prev buttons
+    document.getElementById('nextBtn').addEventListener('click', () => { nextArtwork(); startCycle(); });
+    document.getElementById('prevBtn').addEventListener('click', () => { prevArtwork(); startCycle(); });
+    document.getElementById('frameStyle').addEventListener('change', e => setFrameStyle(e.target.value));
+    document.querySelectorAll('input[name="cycleMode"]').forEach(r => r.addEventListener('change', e => {
+      cycleMode = e.target.value;
+      document.getElementById('chronologicalOptions').style.display = cycleMode === 'chronological' ? 'inline-block':'none';
+      applyFilters();
+    }));
+    document.getElementById('reverseOrder').addEventListener('change', e => { reverseOrder = e.target.checked; applyFilters(); });
+    document.getElementById('speedControl').addEventListener('change', e => { cycleSpeed = +e.target.value; startCycle(); });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      isPaused = !isPaused;
+      if (isPaused) { clearInterval(cycleInterval); pauseBtn.textContent = "▶️ Resume"; }
+      else { startCycle(); pauseBtn.textContent = "🛑 Pause"; }
     });
 
-    // Fullscreen toggle
-    document.getElementById('fullscreen-toggle').addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        document.body.classList.add('fullscreen');
-        document.getElementById('fullscreen-toggle').textContent = "⛶ Exit Fullscreen";
-      } else {
-        document.exitFullscreen();
-        document.body.classList.remove('fullscreen');
-        document.getElementById('fullscreen-toggle').textContent = "⛶ Fullscreen";
-      }
-    });
-
-    // Show colors toggle
     document.getElementById('showColorsBtn').addEventListener('click', () => {
       const panel = document.getElementById('colors-panel');
+      //if (!isPaused) return alert("Pause the slideshow to view colors.");
       panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
     });
 
-    // Initialize
-    window.onload = () => {
-      // Optionally add controls panel if needed, or remove related code
-      // For now, just load artworks
-      loadArtworks();
-      cycleQuotes();
-    };
+    // SoundCloud Music
+    let scWidget, musicPlaying = false;
+    window.addEventListener('load', () => {
+      const scIframe = document.getElementById('soundcloud-embed');
+      if (window.SC && typeof SC.Widget === 'function') scWidget = SC.Widget(scIframe);
+    });
+    document.getElementById('musicBtn').addEventListener('click', () => {
+      if (!scWidget) return;
+      if (!musicPlaying) { scWidget.play(); musicPlaying = true; musicBtn.textContent="Pause 🎵"; }
+      else { scWidget.pause(); musicPlaying = false; musicBtn.textContent="Play 🎵"; }
+    });
+
+    // Fullscreen toggle
+    const fullscreenBtn = document.getElementById('fullscreen-toggle');
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); document.body.classList.add('fullscreen'); fullscreenBtn.textContent="⛶ Exit Fullscreen"; }
+      else { document.exitFullscreen(); document.body.classList.remove('fullscreen'); fullscreenBtn.textContent="⛶ Fullscreen"; }
+    });
+
+    function setFrameStyle(style) {
+      const frame = document.getElementById('frame');
+      frame.className = '';
+      frame.classList.add(style === 'gold' ? 'gold-frame' : style === 'wood' ? 'wood-frame' : 'no-frame');
+    }
+
+    // Start everything
+    setFrameStyle(document.getElementById('frameStyle').value);
+    loadArtworks();
   </script>
 </body>
 </html>
