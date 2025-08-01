@@ -254,24 +254,11 @@ html, body {
       transform: translate(-50%, -50%);
     }
 
-
-.fullscreen .nav-button {
-  position: fixed !important; /* Ensure fixed positioning */
-  top: 50%; /* Adjust top for vertical centering, tweak as needed */
-  transform: translateY(-50%);
-  z-index: 2000 !important; /* Higher than overlays */
-  background: rgba(255, 255, 255, 0.95);
-  cursor: pointer;
+.fullscreen #spotlight {
+  display: block;
+  pointer-events: none; /* critical */
+  z-index: 1; /* below buttons */
 }
-
-.fullscreen #prevBtn {
-  left: 10px !important;
-}
-
-.fullscreen #nextBtn {
-  right: 10px !important;
-}
-
 
 
 
