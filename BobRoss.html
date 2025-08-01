@@ -299,31 +299,57 @@ body:not(.fullscreen) #fullscreen-toggle {
 }
 
 
-/* Mobile Portrait: stack vertically */
 @media (max-width: 768px) and (orientation: portrait) {
+  /* Move heading down slightly for spacing */
+  h1 {
+    margin-top: 20px;
+    font-size: 1.6em;
+  }
+
+  /* Hide fullscreen button */
+  #fullscreen-toggle {
+    display: none;
+  }
+
+  /* Move controls button below heading */
+  #controls-toggle {
+    position: relative;
+    top: 0;
+    display: block;
+    margin: 10px auto;
+    z-index: 1100;
+  }
+
+  /* Adjust nav frame container for spacing */
   #nav-frame-container {
-    flex-direction: column;    /* Stack buttons and frame vertically */
+    flex-direction: column;
     gap: 6px;
+    margin-top: 8px;
   }
 
-  .nav-button {
-    font-size: 1em;            /* Smaller buttons */
-    padding: 6px 12px;
-    width: 50%;                /* Buttons centered and narrower */
-  }
-
+  /* Reduce frame size for better fit */
   #frame img {
-    max-width: 95vw;
-    max-height: 65vh;
+    max-width: 90vw;
+    max-height: 60vh;
   }
 
-  #quote-overlay {
-    font-size: 1em;
-    max-width: 90%;
-    bottom: 10px;              /* Keep below painting */
-    top: auto;
+  /* Adjust buttons overlay (as before) */
+  #showColorsBtn,
+  #youtubeBtn {
+    position: absolute;
+    bottom: 50px;
+    right: 10px;
+    z-index: 3;
+    font-size: 0.9em;
+    padding: 6px 10px;
+  }
+
+  #youtubeBtn {
+    bottom: 90px;
+    background: #f44336;
   }
 }
+
 
 
 #info {
@@ -351,25 +377,6 @@ body:not(.fullscreen) #fullscreen-toggle {
   max-height: 70vh;
 }
 
-/* Mobile Portrait */
-@media (max-width: 768px) and (orientation: portrait) {
-  #frame img {
-    max-width: 95vw;   /* Nearly full width */
-    max-height: 65vh;  /* Slightly shorter height for UI space */
-  }
-
-  #quote-overlay {
-    font-size: 1em;          /* Scale down quotes */
-    max-width: 90%;          /* Prevent overlap */
-    top: auto;
-    bottom: 10px;            /* Move quotes below painting */
-    transform: translateX(-50%);
-  }
-
-  #gallery-container {
-    margin-top: 50px;        /* Reduce top spacing */
-  }
-}
 
 /* Mobile Landscape */
 @media (max-width: 768px) and (orientation: landscape) {
@@ -377,11 +384,12 @@ body:not(.fullscreen) #fullscreen-toggle {
     max-width: 90vw;
     max-height: 80vh;
   }
-
   #quote-overlay {
+    top: auto;
+    bottom: 20px; /* move to bottom in landscape */
+    transform: translateX(-50%);
+    max-width: 90%;
     font-size: 1em;
-    top: 10px;               /* Keep at top in landscape */
-    bottom: auto;
   }
 }
 
