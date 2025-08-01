@@ -11,7 +11,8 @@
 html, body {
   height: 100%;
   margin: 0;
-  overflow: hidden; /* Prevent scrolling */
+  overflow: hidden; /* Prevent extra scroll */
+  display: block; /* Remove flex forcing */
 }
 
 @keyframes fadeBrush {
@@ -182,6 +183,21 @@ html, body {
       z-index: 1200;
     }
 
+    /* Shared: Keep Colors & YouTube fixed bottom */
+#showColorsBtn {
+  position: fixed !important;
+  bottom: 10px;
+  left: 10px;
+  z-index: 1200;
+}
+
+#youtubeBtn {
+  position: fixed !important;
+  bottom: 10px;
+  right: 10px;
+  z-index: 1200;
+}
+
 #quote-overlay {
   position: fixed;
   top: 120px; /* Increase this value to push it down */
@@ -334,68 +350,19 @@ body:not(.fullscreen) #fullscreen-toggle {
 
 /* ---- MOBILE PORTRAIT ---- */
 @media (max-width: 768px) and (orientation: portrait) {
-  body {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  /* Keep Colors & YouTube fixed at bottom */
-  #showColorsBtn {
-    position: fixed !important;
-    bottom: 10px;
-    left: 10px;
-    width: auto;
-  }
-  #youtubeBtn {
-    position: fixed !important;
-    bottom: 10px;
-    right: 10px;
-    width: auto;
-  }
-
-  /* Adjust image to fit without scrolling */
-  #frame img {
-    max-height: 50vh;
-  }
-
-  /* Stack nav buttons tighter and center */
-  #nav-frame-container {
-    flex-direction: row;
-    justify-content: center;
-    margin-bottom: 5px;
-  }
+  h1 { font-size: 1.4em; margin-top: 10px; }
+  #frame img { max-height: 55vh; max-width: 90vw; }
+  #quote-overlay { top: auto; bottom: 80px; font-size: 1em; }
+  #nav-frame-container { flex-direction: column; margin-bottom: 10px; }
 }
 
 /* ---- MOBILE LANDSCAPE ---- */
 @media (max-width: 1024px) and (orientation: landscape) {
-  html, body {
-    overflow: hidden; /* Lock viewport height */
-  }
-
-  /* Keep Colors & YouTube buttons bottom fixed */
-  #showColorsBtn {
-    position: fixed !important;
-    bottom: 10px;
-    left: 10px;
-  }
-  #youtubeBtn {
-    position: fixed !important;
-    bottom: 10px;
-    right: 10px;
-  }
-
-  /* Reduce image slightly to prevent scrolling */
-  #frame img {
-    max-height: 65vh;
-  }
-
-  /* Adjust quote placement to avoid overlap */
-  #quote-overlay {
-    bottom: 60px !important; /* Above buttons */
-  }
+  h1 { font-size: 1.2em; margin-top: 5px; }
+  #frame img { max-height: 65vh; max-width: 80vw; }
+  #quote-overlay { bottom: 80px; font-size: 0.9em; }
+  #nav-frame-container { flex-direction: row; gap: 8px; margin-bottom: 5px; }
 }
-
 
     
   </style>
