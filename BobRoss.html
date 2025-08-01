@@ -289,7 +289,7 @@ body:not(.fullscreen) #fullscreen-toggle {
 .nav-button:hover {
   background: #f0f0f0;
 }
-
+  /* Default (desktop/tablet): keep current row layout */
 #nav-frame-container {
   display: flex;
   justify-content: center;
@@ -297,6 +297,34 @@ body:not(.fullscreen) #fullscreen-toggle {
   gap: 10px; /* space between buttons and frame */
   margin-bottom: 12px;
 }
+
+
+/* Mobile Portrait: stack vertically */
+@media (max-width: 768px) and (orientation: portrait) {
+  #nav-frame-container {
+    flex-direction: column;    /* Stack buttons and frame vertically */
+    gap: 6px;
+  }
+
+  .nav-button {
+    font-size: 1em;            /* Smaller buttons */
+    padding: 6px 12px;
+    width: 50%;                /* Buttons centered and narrower */
+  }
+
+  #frame img {
+    max-width: 95vw;
+    max-height: 65vh;
+  }
+
+  #quote-overlay {
+    font-size: 1em;
+    max-width: 90%;
+    bottom: 10px;              /* Keep below painting */
+    top: auto;
+  }
+}
+
 
 #info {
   display: inline-block;
