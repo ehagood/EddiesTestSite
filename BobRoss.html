@@ -180,7 +180,7 @@ html, body {
 
 #quote-overlay {
   position: fixed;
-  top: 140px; /* Increase this value to push it down */
+  top: 120px; /* Increase this value to push it down */
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.7);
@@ -192,6 +192,44 @@ html, body {
   transition: opacity 1s ease-in-out;
   z-index: 1300;
 }
+
+    #background-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -10;
+  overflow: hidden;
+}
+
+#background-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#background-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4); /* Adjust opacity here */
+  z-index: 1;
+}
+
+#white-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  opacity: 1;
+  animation: fadeWhite 10s forwards;
+  pointer-events: none;
+  z-index: 2;
+}
+
 
 
     /* Brush Stroke */
@@ -297,6 +335,8 @@ body:not(.fullscreen) #fullscreen-toggle {
   <!-- Quotes -->
   <div id="quote-overlay"></div>
 
+  <div id="background-overlay"></div>
+
   <!-- Toggle buttons -->
   <button id="controls-toggle">⚙️ Controls</button>
   <button id="fullscreen-toggle">⛶ Fullscreen</button>
@@ -376,6 +416,13 @@ body:not(.fullscreen) #fullscreen-toggle {
       "There's nothing wrong with having a tree as a friend.",
       "Talent is a pursued interest. Anything you’re willing to practice, you can do.",
       "There’s nothing in the world that breeds success like success."
+      "Ever make mistakes in life? Let's make them birds. Yeah, they're birds now."
+      "Whatever makes you happy, you put in your world."
+      "We have no limits to our world. We're only limited by our imagination."
+      "Let's build us a happy, little cloud that floats around the sky."
+      "It's hard to see things when you're too close. Take a step back and look."
+      "It's so important to do something every day that will make you happy"
+      "Trees don't grow even, they don't grow straight just however it makes them happy."
     ];
 
     async function loadArtworks() {
