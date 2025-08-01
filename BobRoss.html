@@ -269,7 +269,6 @@ html, body {
     
     .fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
     .fullscreen h1, .fullscreen #info, .fullscreen #progress-bar-container { opacity: 0; }
-    .fullscreen #spotlight { display: block; opacity: 1; }
 
     /* Push title and gallery down */
 body:not(.fullscreen) h1,
@@ -339,7 +338,7 @@ body:not(.fullscreen) #fullscreen-toggle {
 
 /* ---- MOBILE PORTRAIT ---- */
 @media (max-width: 768px) and (orientation: portrait) {
-  h1 { font-size: 1.4em; margin-top: 40px; }
+  h1 { font-size: 1.4em; margin-top: 40px; !important; }
   #frame img { max-height: 55vh; max-width: 90vw; }
   #quote-overlay {
   display: none !important;
