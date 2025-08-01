@@ -30,7 +30,7 @@ html, body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: brightness(0.5);
+    filter: brightness(0.8);
   }
 
   /* White overlay that fades out */
@@ -80,7 +80,23 @@ html, body {
       transition: opacity 1s ease-in-out, transform 8s ease-in-out;
     }
     #frame img.visible { opacity: 1; transform: scale(1.05); }
-    #info { margin-top: 8px; font-size: 1.2em; transition: opacity 0.3s ease-in-out; }
+    
+   #info {
+  margin-top: 8px;
+  font-size: 1.2em;
+  transition: opacity 0.3s ease-in-out;
+
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  color: #333;
+  max-width: 75vw;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
 
     /* Spotlight effect for fullscreen */
     #spotlight {
