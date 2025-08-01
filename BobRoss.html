@@ -254,22 +254,28 @@ html, body {
       transform: translate(-50%, -50%);
     }
 
-    .fullscreen .nav-button {
-  z-index: 1600;
-  position: relative;
+
+
+    .fullscreen #nav-frame-container {
+  position: fixed !important;
+  top: auto !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  gap: 10px !important;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 10px 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+
+.fullscreen .nav-button {
+  z-index: 10000 !important;
   cursor: pointer;
 }
-.fullscreen #nav-frame-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1500; /* high enough */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
+
     
     
     .fullscreen #frame img { max-width: 90vw; max-height: 85vh; }
