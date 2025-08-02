@@ -22,16 +22,16 @@ stage.addEventListener('drop', async e => {
 
   if (activeSounds.has(soundFile)) return;
 
-  // Create Sprunki slot (start idle, switch to active)
+  // Create Sprunki slot (start idle image)
   const slot = document.createElement('div');
   slot.className = 'stage-slot';
 
   const img = document.createElement('img');
-  img.src = `assets/sprites/${idleImg}`; // Start idle
+  img.src = `assets/sprites/${idleImg}`; // Start idle pose
   slot.appendChild(img);
   stage.appendChild(slot);
 
-  // Play sound
+  // Load and play sound
   const response = await fetch(`assets/audio/${soundFile}`);
   const arrayBuffer = await response.arrayBuffer();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
@@ -42,9 +42,11 @@ stage.addEventListener('drop', async e => {
   source.connect(audioContext.destination);
   source.start();
 
-  // Switch to active animation
+  // ✅ Switch to active animation & dancing effect AFTER starting sound
   img.src = `assets/sprites/${activeImg}`;
+  img.classList.add('active'); // <-- This line goes here
 
+  // Track active Sprunki
   activeSounds.set(soundFile, { source, slot });
 
   // Remove on click
@@ -54,3 +56,4 @@ stage.addEventListener('drop', async e => {
     activeSounds.delete(soundFile);
   });
 });
+
