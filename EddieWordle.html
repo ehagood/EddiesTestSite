@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Wordle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121213;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding-top: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    #board {
+      display: grid;
+      grid-template-rows: repeat(6, 1fr);
+      gap: 5px;
+      margin-bottom: 20px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 5px;
+    }
+    .tile {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #3a3a3c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      font-weight: bold;
+      text-transform: uppercase;
+      background: #121213;
+      color: white;
+    }
+    .correct { background: #538d4e !important; border-color: #538d4e; } /* Green */
+    .present { background: #b59f3b !important; border-color: #b59f3b; } /* Yellow */
+    .absent { background: #3a3a3c !important; border-color: #3a3a3c; } /* Gray */
+    #message {
+      margin-top: 10px;
+      font-size: 1.2em;
+    }
+    #keyboard {
+      display: grid;
+      grid-template-rows: repeat(3, auto);
+      gap: 5px;
+      justify-items: center;
+      margin-top: 15px;
+    }
+    .key-row {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+    }
+    .key {
+      background: #818384;
+      color: white;
+      border: none;
+      padding: 10px;
+      font-size: 1em;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      min-width: 40px;
+    }
+    .key.correct { background: #538d4e !important; }
+    .key.present { background: #b59f3b !important; }
+    .key.absent { background: #3a3a3c !important; }
+    .key.wide { min-width: 60px; }
+  </style>
+</head>
+<body>
+  <h1>Mini Wordle</h1>
+  <div id="board"></div>
+  <div id="message"></div>
+  <div id="keyboard"></div>
+
+  <script>
+    const words = ["eddie", "missy", "beach", "happy", "stink", "farty", "turds"];
+    const solution = words[Math.floor(Math.random() * words.length)];
+    console.log("Solution:", solution); // For testing
+
+    const board = document.getElementById("board");
+    const message = document.getElementById("message");
+    const keyboard = document.getElementById("keyboard");
+    const rows = 6;
+    const cols = 5;
+
+    let currentRow = 0;
+    let currentCol = 0;
+    let guesses = Array(rows).fill("").map(() => Array(cols).fill(""));
+    let gameOver = false;
+
+    // Build grid
+    for (let r = 0; r < rows; r++) {
+      const row = document.createElement("div");
+      row.className = "row";
+      for (let c = 0; c < cols; c++) {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.id = `tile-${r}-${c}`;
+        row.appendChild(tile);
+      }
+      board.appendChild(row);
+    }
+
+    // Build on-screen keyboard
+    const keyLayout = [
+      ["q","w","e","r","t","y","u","i","o","p"],
+      ["a","s","d","f","g","h","j","k","l"],
+      ["Enter","z","x","c","v","b","n","m","Back"]
+    ];
+    keyLayout.forEach(row => {
+      const keyRow = document.createElement("div");
+      keyRow.className = "key-row";
+      row.forEach(key => {
+        const btn = document.createElement("button");
+        btn.textContent = key === "Back" ? "⌫" : key;
+        btn.className = "key";
+        if (key === "Enter" || key === "Back") btn.classList.add("wide");
+        btn.dataset.key = key;
+        btn.addEventListener("click", () => handleKey(key));
+        keyRow.appendChild(btn);
+      });
+      keyboard.appendChild(keyRow);
+    });
+
+    // Handle physical keyboard
+    document.addEventListener("keydown", (e) => {
+      if (gameOver) return;
+      if (e.key === "Backspace") handleKey("Back");
+      else if (e.key === "Enter") handleKey("Enter");
+      else if (/^[a-z]$/i.test(e.key)) handleKey(e.key.toLowerCase());
+    });
+
+    function handleKey(key) {
+      if (gameOver) return;
+      if (key === "Back") {
+        if (currentCol > 0) {
+          currentCol--;
+          guesses[currentRow][currentCol] = "";
+          document.getElementById(`tile-${currentRow}-${currentCol}`).textContent = "";
+        }
+      } else if (key === "Enter") {
+        if (currentCol === cols) checkGuess();
+      } else if (/^[a-z]$/.test(key) && currentCol < cols) {
+        guesses[currentRow][currentCol] = key;
+        document.getElementById(`tile-${currentRow}-${currentCol}`).textContent = key.toUpperCase();
+        currentCol++;
+      }
+    }
+
+    function checkGuess() {
+      const guess = guesses[currentRow].join("");
+      if (guess.length !== cols) return;
+
+      const solutionArr = solution.split("");
+      const tileStates = Array(cols).fill("absent");
+
+      // First pass: correct letters
+      for (let i = 0; i < cols; i++) {
+        if (guess[i] === solution[i]) {
+          tileStates[i] = "correct";
+          solutionArr[i] = null; // Mark letter used
+        }
+      }
+      // Second pass: present letters
+      for (let i = 0; i < cols; i++) {
+        if (tileStates[i] === "correct") continue;
+        const index = solutionArr.indexOf(guess[i]);
+        if (index !== -1) {
+          tileStates[i] = "present";
+          solutionArr[index] = null;
+        }
+      }
+
+      // Update tiles & keyboard
+      for (let i = 0; i < cols; i++) {
+        const tile = document.getElementById(`tile-${currentRow}-${i}`);
+        tile.classList.add(tileStates[i]);
+        const keyBtn = [...document.querySelectorAll(".key")].find(b => b.dataset.key === guess[i]);
+        if (keyBtn) keyBtn.classList.add(tileStates[i]);
+      }
+
+      if (guess === solution) {
+        message.textContent = "🎉 You won!";
+        gameOver = true;
+        return;
+      }
+
+      currentRow++;
+      currentCol = 0;
+
+      if (currentRow === rows) {
+        message.textContent = `💀 Game over! The word was "${solution.toUpperCase()}".`;
+        gameOver = true;
+      }
+    }
+  </script>
+</body>
+</html>
