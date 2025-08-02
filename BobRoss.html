@@ -343,7 +343,11 @@ body:not(.fullscreen) #fullscreen-toggle {
 
 /* ---- MOBILE PORTRAIT ---- */
 @media (max-width: 768px) and (orientation: portrait) {
-  h1 { font-size: 1.4em; margin-top: 40px; !important; }
+  h1 { 
+    font-size: 1.4em;
+    position: relative;
+    top: 50px; /* Move down without affecting layout flow */
+  }
   #frame img { max-height: 55vh; max-width: 90vw; }
   #quote-overlay {
   display: none !important;
@@ -351,6 +355,8 @@ body:not(.fullscreen) #fullscreen-toggle {
   #nav-frame-container { flex-direction: column; margin-bottom: 10px; }
 }
 
+
+    
 @media (max-width: 1024px) and (orientation: landscape) {
   /* Hide all UI elements */
   #controls-panel,
